@@ -26,18 +26,36 @@
   </header>
 
   <div class="search-wrapper mb-5">
-    <div class="search-box d-flex align-items-center gap-2 mx-auto shadow-sm" style="max-width: 500px;">
-      <span class="search-icon">🔍</span>
+    <div class="search-box d-flex align-items-center gap-2 mx-auto rounded-pill bg-white shadow p-1" style="max-width: 600px;">
       <input
-        class="form-control search-input"
+        class="form-control form-control-lg border-0 rounded-pill search-input"
         type="text"
         placeholder="Suche nach Rezepten..."
+        style="box-shadow: none !important; /* WICHTIG: Entfernt den blauen Bootstrap-Glow */"
       />
+      <button class="btn btn-cooked-search rounded-pill px-4 py-2 m-1">Finden</button>
     </div>
   </div>
 </template>
 
 <style scoped>
+.btn-cooked-search {
+  background-color: #81801f;
+  color: white;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+.btn-cooked-search:hover {
+  background-color: #6b6a19;
+  color: white;
+}
+
+.hero {
+  background-color: transparent;
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+  color: #2c3e50;
+}
 
 .hero-title {
   font-size: 3.5rem;
@@ -45,7 +63,7 @@
   line-height: 1.1;
   color: white;
   margin-bottom: 1.5rem;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Kleiner Schatten für Lesbarkeit */
+  text-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .hero-sub {
@@ -73,7 +91,7 @@
 
 .cta-float {
   display: inline-block;
-  background-color: #81801f; /* Dein Olivgrün als Akzent für den Button */
+  background-color: #81801f;
   color: white;
   padding: 12px 30px;
   border-radius: 50px;

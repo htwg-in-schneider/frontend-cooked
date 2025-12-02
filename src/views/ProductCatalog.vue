@@ -1,6 +1,5 @@
 <script setup>
 import { products } from '@/data.js'
-// WICHTIG: Der Banner muss hier importiert werden!
 import SpecialBanner from '@/components/SpecialBanner.vue' 
 import ProductCard from '@/components/ProductCard.vue'
 import { useRouter } from 'vue-router'

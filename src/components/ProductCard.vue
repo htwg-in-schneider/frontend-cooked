@@ -9,11 +9,11 @@ defineEmits(['show-details'])
 </script>
 
 <template>
-  <article class="card cooked-card h-100 shadow-sm border-0">
+  <article class="card h-100 shadow-sm border-0 cooked-card">
     <div class="p-3">
       <img
         class="square rounded-4 w-100"
-        :src="product.image" 
+        :src="product.image"
         :alt="product.title"
         style="object-fit: cover; aspect-ratio: 1/1;"
       />
@@ -26,8 +26,8 @@ defineEmits(['show-details'])
         <span>⏱ {{ product.time }}</span>
       </div>
 
-      <Button 
-        variant="accent" 
+      <Button
+        variant="accent"
         class="w-100"
         @click="$emit('show-details', product)"
       >
@@ -39,6 +39,18 @@ defineEmits(['show-details'])
 </template>
 
 <style scoped>
-.cooked-card { transition: transform 0.2s; }
-.cooked-card:hover { transform: translateY(-5px); }
+/* HIER DEFINIEREN WIR DIE NEUE RUNDUNG */
+.cooked-card {
+  /* 25px ist ein guter Wert für "deutlich runder, aber keine Pille" */
+  border-radius: 25px;
+  /* Wichtig: overflow: hidden sorgt dafür, dass nichts über die runden Ecken hinaussteht */
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Optional: Ein leichter Hover-Effekt, damit es sich interaktiv anfühlt */
+.cooked-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+}
 </style>
