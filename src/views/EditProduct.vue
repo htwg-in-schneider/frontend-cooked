@@ -13,7 +13,7 @@ onMounted(async () => {
   const id = route.params.id
   // URL aus .env nutzen
   const baseUrl = import.meta.env.VITE_API_URL
-  const res = await fetch(`${baseUrl}/recipes/${id}`)
+  const res = await fetch(`${baseUrl}/${id}`)
   const data = await res.json()
   
   form.value = {
