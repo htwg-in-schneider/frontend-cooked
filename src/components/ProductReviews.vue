@@ -18,8 +18,8 @@ async function fetchReviews() {
     // 1. Basis-URL aus .env holen
     const baseUrl = import.meta.env.VITE_API_URL
     
-    // 2. URL zusammenbauen (DummyJSON Trick: Comments für Posts nutzen)
-    const res = await fetch(`${baseUrl}/comments/post/${props.productId}`)
+    const res = await fetch(`${baseUrl.replace("recipes","review/product")}/${props.productId}`)
+
     
     if (!res.ok) {
       reviews.value = []

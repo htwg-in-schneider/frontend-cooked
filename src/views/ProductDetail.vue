@@ -14,18 +14,18 @@ onMounted(async () => {
     const id = route.params.id
     
     // HIER IST DIE ÄNDERUNG: Wir nutzen die Variable aus der .env Datei
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/recipes/${id}`)
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/${id}`)
     
     if (!res.ok) throw new Error('Rezept nicht gefunden')
     const data = await res.json()
     
     product.value = {
       id: data.id,
-      title: data.name,
-      category: data.cuisine,
-      time: data.prepTimeMinutes + ' min',
-      image: data.image,
-      instructions: data.instructions 
+      title: data.title,
+      category: data.category,
+      image: data.imageUrl,
+      instructions: data.description.split("\n")
+
     }
   } catch (e) {
     error.value = e.message
