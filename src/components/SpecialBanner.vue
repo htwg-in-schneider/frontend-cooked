@@ -1,8 +1,20 @@
 <script setup>
+import { useBannerStore } from '@/stores/banner'
+
+const bannerStore = useBannerStore()
 </script>
 
 <template>
-  <header class="hero">
+  <header class="hero position-relative" v-if="bannerStore.isVisible">
+    
+    <button 
+      class="btn-close-banner" 
+      @click="bannerStore.hideBanner()"
+      title="Banner ausblenden"
+    >
+      ✕
+    </button>
+
     <div class="container-fluid px-5">
       <div class="hero-grid">
         <div class="hero-copy">
@@ -15,7 +27,9 @@
             Wir sind Lucas & Melina – zwei Foodfans, <br />
             die Kochen lieben und es gerne einfach halten.
           </p>
+          
           <a href="#" class="cta-float">Jetzt loskochen!</a>
+        
         </div>
 
         <div class="hero-media">
@@ -31,7 +45,7 @@
         class="form-control form-control-lg border-0 rounded-pill search-input"
         type="text"
         placeholder="Suche nach Rezepten..."
-        style="box-shadow: none !important; /* WICHTIG: Entfernt den blauen Bootstrap-Glow */"
+        style="box-shadow: none !important;"
       />
       <button class="btn btn-cooked-search rounded-pill px-4 py-2 m-1">Finden</button>
     </div>
@@ -39,6 +53,50 @@
 </template>
 
 <style scoped>
+.cta-float {
+  display: inline-block;
+  background-color: #81801f;
+  color: white;
+  padding: 12px 30px;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: transform 0.2s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  margin-top: 10px;
+}
+
+.cta-float:hover {
+  transform: scale(1.05);
+  background-color: #6b6a19;
+  color: white;
+}
+
+.position-relative {
+  position: relative;
+}
+
+.btn-close-banner {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: bold;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.btn-close-banner:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* --- Suche --- */
 .btn-cooked-search {
   background-color: #81801f;
   color: white;
@@ -50,6 +108,7 @@
   color: white;
 }
 
+/* --- Hero Bereich --- */
 .hero {
   background-color: transparent;
   padding-top: 2rem;
@@ -82,28 +141,11 @@
 }
 
 .hero-photo {
-  width: 80%;
+  width: 75%;
   height: auto;
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-.cta-float {
-  display: inline-block;
-  background-color: #81801f;
-  color: white;
-  padding: 12px 30px;
-  border-radius: 50px;
-  text-decoration: none;
-  font-weight: bold;
-  transition: transform 0.2s;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
-.cta-float:hover {
-  transform: scale(1.05);
-  background-color: #6b6a19;
 }
 
 @media (max-width: 768px) {
