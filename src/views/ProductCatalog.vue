@@ -17,36 +17,40 @@ async function fetchProducts(filters = {}) {
   error.value = null
   
   try {
-    // 1. Basis-URL aus der .env Datei laden
+    // 1. Basis-URL aus der .env Datei laden (z.B. http://localhost:8081/api/product)
     const baseUrl = import.meta.env.VITE_API_URL
-    let url = `${baseUrl}/recipes`
     
-    // 2. URL je nach Filter anpassen
+    // Wir nutzen URLSearchParams, um die URL sauber zusammenzubauen
+    const url = new URL(baseUrl)
+    
+    // 2. Parameter für dein Spring Boot Backend setzen
     if (filters.name) {
-      url = `${baseUrl}/recipes/search?q=${filters.name}`
-    } else if (filters.category) {
-      url = `${baseUrl}/recipes/tag/${filters.category}`
-    } else {
-      url = `${baseUrl}/recipes?limit=12`
+      url.searchParams.append('name', filters.name)
+    }
+    if (filters.category) {
+      url.searchParams.append('category', filters.category)
     }
 
     // 3. Daten abrufen
-    const res = await fetch(url)
+    const res = await fetch(url.toString())
     if (!res.ok) throw new Error('Fehler beim Laden')
+    
     const data = await res.json()
     
-    // 4. Mapping der Daten
-    products.value = data.recipes.map(recipe => ({
+    // 4. Mapping: Backend-Daten -> Frontend-Struktur
+    // WICHTIG: Dein Backend liefert direkt das Array (data), kein "recipes"-Objekt!
+    products.value = data.map(recipe => ({
       id: recipe.id,
-      title: recipe.name,
-      category: recipe.cuisine,
-      time: recipe.prepTimeMinutes + ' min',
-      image: recipe.image,
-      description: recipe.difficulty 
+      title: recipe.title,           // Backend: title
+      category: recipe.category,     // Backend: category
+      time: recipe.prepTimeMinutes + ' min', // Backend: prepTimeMinutes
+      image: recipe.imageUrl,        // Backend: imageUrl
+      description: recipe.description // Backend: description
     }))
 
   } catch (e) {
     error.value = e.message
+    console.error(e)
   } finally {
     loading.value = false
   }
@@ -72,7 +76,8 @@ function goToDetail(product) {
 
   <main class="container">
     
-    <ProductFilter @filter-change="handleFilterChange" />
+    <div :class="{ 'mt-huge': !false }"> <ProductFilter @filter-change="handleFilterChange" />
+    </div>
 
     <section class="py-5">
       
@@ -92,7 +97,10 @@ function goToDetail(product) {
         <div class="spinner-border text-primary" role="status"></div>
       </div>
 
-      <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
+      <div v-else-if="error" class="alert alert-danger">
+        Verbindung fehlgeschlagen: {{ error }} <br>
+        <small>Läuft das Backend auf Port 8081?</small>
+      </div>
 
       <div v-else-if="products.length === 0" class="text-center py-5 text-muted">
         <p class="fs-4">Keine Rezepte gefunden 🍽️</p>
@@ -114,3 +122,7 @@ function goToDetail(product) {
     </section>
   </main>
 </template>
+
+<style scoped>
+.mt-huge { margin-top: 120px; }
+</style>
