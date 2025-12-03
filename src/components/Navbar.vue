@@ -53,7 +53,7 @@
 }
 
 .active {
-  background-color: #2d3748;
+  background-color: #6b6a19;
   color: white;
 }
 </style>
