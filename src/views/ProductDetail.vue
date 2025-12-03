@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Button from '@/components/Button.vue'
+// NEU: Importieren der Reviews Komponente
+import ProductReviews from '@/components/ProductReviews.vue'
 
 const route = useRoute()
 const product = ref(null)
@@ -33,6 +35,7 @@ onMounted(async () => {
 
 <template>
   <div class="container py-5">
+    
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status"></div>
     </div>
@@ -44,6 +47,7 @@ onMounted(async () => {
     </div>
 
     <div v-else-if="product" class="detail-card bg-white p-4 shadow-sm mx-auto">
+      
       <div class="row g-4">
         <div class="col-md-6">
           <img :src="product.image" :alt="product.title" class="img-fluid w-100 detail-image shadow-sm" />
@@ -84,6 +88,9 @@ onMounted(async () => {
           </div>
         </div>
       </div>
+
+      <ProductReviews :productId="product.id" />
+
     </div>
   </div>
 </template>
