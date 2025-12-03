@@ -80,13 +80,13 @@ const bannerStore = useBannerStore()
 }
 .btn-close-banner:hover { background: rgba(255, 255, 255, 0.4); }
 
-/* --- Hero Layout --- */
+
 .hero {
   background-color: transparent;
   padding-top: 2rem;
-  padding-bottom: 6rem; /* Mehr Platz unten für das große Bild */
-  color: #2c3e50;
-  overflow: hidden; /* WICHTIG: Damit das Bild nicht aus der Seite ragt */
+  padding-bottom: 6rem;
+  color: #6b6a19;
+  overflow: hidden; 
 }
 
 .hero-title {
@@ -116,7 +116,6 @@ const bannerStore = useBannerStore()
   align-items: center;
 }
 
-/* --- DAS NEUE BILD DESIGN --- */
 .hero-media {
   display: flex;
   justify-content: flex-end; /* Rechtsbündig */
