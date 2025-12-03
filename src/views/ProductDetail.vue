@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Button from '@/components/Button.vue'
-// NEU: Importieren der Reviews Komponente
 import ProductReviews from '@/components/ProductReviews.vue'
 
 const route = useRoute()
@@ -13,7 +12,10 @@ const error = ref(null)
 onMounted(async () => {
   try {
     const id = route.params.id
-    const res = await fetch(`https://dummyjson.com/recipes/${id}`)
+    
+    // HIER IST DIE ÄNDERUNG: Wir nutzen die Variable aus der .env Datei
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/recipes/${id}`)
+    
     if (!res.ok) throw new Error('Rezept nicht gefunden')
     const data = await res.json()
     

@@ -15,12 +15,13 @@ const loading = ref(true)
 async function fetchReviews() {
   loading.value = true
   try {
-    // Trick: Wir nutzen den "Post Comments" Endpoint von DummyJSON
-    // und tun so, als wäre die Rezept-ID eine Post-ID.
-    const res = await fetch(`https://dummyjson.com/comments/post/${props.productId}`)
+    // 1. Basis-URL aus .env holen
+    const baseUrl = import.meta.env.VITE_API_URL
+    
+    // 2. URL zusammenbauen (DummyJSON Trick: Comments für Posts nutzen)
+    const res = await fetch(`${baseUrl}/comments/post/${props.productId}`)
     
     if (!res.ok) {
-      // Wenn es keine Kommentare gibt (404), lassen wir die Liste einfach leer
       reviews.value = []
       return
     }
@@ -39,7 +40,7 @@ onMounted(() => {
   fetchReviews()
 })
 
-// Falls sich die ID ändert (z.B. wenn man von Rezept 1 zu 2 wechselt), neu laden
+// Falls sich die ID ändert, neu laden
 watch(() => props.productId, () => {
   fetchReviews()
 })
@@ -49,15 +50,19 @@ watch(() => props.productId, () => {
   <div class="reviews-section mt-5 pt-5 border-top">
     <h3 class="mb-4 fw-bold">Bewertungen ({{ reviews.length }})</h3>
 
+    <!-- Loading -->
     <div v-if="loading" class="text-muted">Lade Bewertungen...</div>
 
+    <!-- Keine Bewertungen -->
     <div v-else-if="reviews.length === 0" class="text-muted fst-italic">
       Noch keine Bewertungen für dieses Rezept. Sei der Erste!
     </div>
 
+    <!-- Liste der Bewertungen -->
     <div v-else class="review-list">
       <div v-for="review in reviews" :key="review.id" class="review-card mb-3 bg-light p-3 rounded-4">
         <div class="d-flex align-items-center mb-2">
+          <!-- Kleiner Avatar (Fake) -->
           <div class="avatar bg-white text-secondary fw-bold rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm">
             {{ review.user.username.charAt(0).toUpperCase() }}
           </div>

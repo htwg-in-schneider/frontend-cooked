@@ -1,26 +1,30 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import Button from './Button.vue'
-// NEU: Store importieren
 import { useBannerStore } from '@/stores/banner'
 
-const bannerStore = useBannerStore() // Store nutzen
+const bannerStore = useBannerStore()
 
+// Events definieren
 const emit = defineEmits(['filter-change'])
+
+// Daten
 const searchQuery = ref('')
 const selectedCategory = ref('')
 const categories = ref([])
 
 onMounted(async () => {
   try {
-    const res = await fetch('https://dummyjson.com/recipes/tags')
+    const baseUrl = import.meta.env.VITE_API_URL
+    const res = await fetch(`${baseUrl}/recipes/tags`)
     const data = await res.json()
     categories.value = data
   } catch (e) {
-    console.error('Fehler', e)
+    console.error('Fehler beim Laden der Kategorien', e)
   }
 })
 
+// Filter senden
 function emitFilters() {
   emit('filter-change', {
     name: searchQuery.value,
@@ -28,6 +32,7 @@ function emitFilters() {
   })
 }
 
+// Reset
 function resetFilter() {
   searchQuery.value = ''
   selectedCategory.value = ''
@@ -42,6 +47,7 @@ function resetFilter() {
   >
     <div class="row g-3 align-items-end">
       
+      <!-- Suche -->
       <div class="col-md-5">
         <label class="form-label small text-muted fw-bold">Suche</label>
         <input 
@@ -53,6 +59,7 @@ function resetFilter() {
         >
       </div>
 
+      <!-- Kategorie -->
       <div class="col-md-5">
         <label class="form-label small text-muted fw-bold">Kategorie</label>
         <select 
@@ -67,6 +74,7 @@ function resetFilter() {
         </select>
       </div>
 
+      <!-- Reset Button -->
       <div class="col-md-2">
         <Button 
           variant="secondary" 
@@ -85,14 +93,16 @@ function resetFilter() {
 .filter-card {
   border-radius: 30px;
   max-width: 900px;
-  margin-top: -30px; /* Normalzustand: Überlappt den Banner leicht */
+  margin-top: -30px; /* Normal: Überlappt den Banner leicht */
   position: relative;
   z-index: 10;
-  transition: margin-top 0.3s ease; /* Schöner Rutscher-Effekt */
+  transition: margin-top 0.3s ease;
+  /* Schatten verstärken für Tiefe */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08)!important;
 }
 
-/* Spezialklasse für "Banner ist weg" */
+/* Wenn der Banner weg ist, schieben wir den Filter runter */
 .mt-150 {
-  margin-top: 120px !important; /* Viel Abstand, damit es unter der Navbar sitzt */
+  margin-top: 120px !important; 
 }
 </style>

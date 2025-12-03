@@ -11,13 +11,16 @@ const loading = ref(true)
 // Daten beim Start laden
 onMounted(async () => {
   const id = route.params.id
-  const res = await fetch(`https://dummyjson.com/recipes/${id}`)
+  // URL aus .env nutzen
+  const baseUrl = import.meta.env.VITE_API_URL
+  const res = await fetch(`${baseUrl}/recipes/${id}`)
   const data = await res.json()
   
   form.value = {
     title: data.name,
     category: data.cuisine,
     prepTimeMinutes: data.prepTimeMinutes,
+    image: data.image, // WICHTIG: Das Bild laden wir jetzt auch!
     instructions: Array.isArray(data.instructions) ? data.instructions.join('\n') : data.instructions
   }
   loading.value = false
@@ -26,7 +29,8 @@ onMounted(async () => {
 // UPDATE (Speichern)
 async function updateProduct() {
   try {
-    const res = await fetch(`https://dummyjson.com/recipes/${route.params.id}`, {
+    const baseUrl = import.meta.env.VITE_API_URL
+    const res = await fetch(`${baseUrl}/recipes/${route.params.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value)
@@ -34,7 +38,7 @@ async function updateProduct() {
     if (!res.ok) throw new Error('Fehler beim Speichern')
     
     alert('Änderungen gespeichert! (Simulation)')
-    router.push('/') // Zurück zur Startseite
+    router.push('/') 
   } catch (e) {
     alert(e.message)
   }
@@ -45,7 +49,8 @@ async function deleteProduct() {
   if (!confirm('Wirklich löschen?')) return
 
   try {
-    const res = await fetch(`https://dummyjson.com/recipes/${route.params.id}`, {
+    const baseUrl = import.meta.env.VITE_API_URL
+    const res = await fetch(`${baseUrl}/recipes/${route.params.id}`, {
       method: 'DELETE'
     })
     if (!res.ok) throw new Error('Fehler beim Löschen')
@@ -75,6 +80,37 @@ async function deleteProduct() {
           <label class="form-label small text-muted">Name</label>
           <input v-model="form.title" class="form-control rounded-pill px-3" />
         </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label text-muted small">Kategorie</label>
+            <input v-model="form.category" type="text" class="form-control rounded-pill px-3" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-muted small">Zeit (Minuten)</label>
+            <input v-model="form.prepTimeMinutes" type="number" class="form-control rounded-pill px-3" />
+          </div>
+        </div>
+        
+        <!-- HIER IST DAS BILD-FELD (wie bei Create) -->
+        <div class="mb-4 p-3 bg-light rounded-4 border border-white">
+          <label class="form-label text-muted small">Bild URL</label>
+          <input 
+            v-model="form.image" 
+            type="url" 
+            class="form-control rounded-pill px-3 mb-2" 
+          />
+          <!-- Vorschau -->
+          <div v-if="form.image" class="text-center">
+            <img 
+              :src="form.image" 
+              class="img-fluid rounded-4 shadow-sm" 
+              style="height: 200px; object-fit: cover;" 
+              alt="Bild Vorschau"
+              @error="form.image = ''" 
+            />
+          </div>
+        </div>
         
         <div class="mb-4">
           <label class="form-label small text-muted">Zubereitung</label>
@@ -95,4 +131,5 @@ async function deleteProduct() {
 <style scoped>
 .form-card { max-width: 700px; border-radius: 40px; }
 input, textarea { border: 1px solid #eee; background-color: #f9f9f9; }
+input:focus, textarea:focus { background-color: white; border-color: #81801f; box-shadow: none; }
 </style>

@@ -11,28 +11,31 @@ const products = ref([])
 const loading = ref(true)
 const error = ref(null)
 
-// Die Haupt-Funktion zum Laden der Produkte (mit Filter-Logik)
+// Die Haupt-Funktion zum Laden der Produkte
 async function fetchProducts(filters = {}) {
   loading.value = true
   error.value = null
   
   try {
-    let url = 'https://dummyjson.com/recipes'
+    // 1. Basis-URL aus der .env Datei laden
+    const baseUrl = import.meta.env.VITE_API_URL
+    let url = `${baseUrl}/recipes`
     
-    // API Logik simulieren:
+    // 2. URL je nach Filter anpassen
     if (filters.name) {
-      url = `https://dummyjson.com/recipes/search?q=${filters.name}`
+      url = `${baseUrl}/recipes/search?q=${filters.name}`
     } else if (filters.category) {
-      url = `https://dummyjson.com/recipes/tag/${filters.category}`
+      url = `${baseUrl}/recipes/tag/${filters.category}`
     } else {
-      url = 'https://dummyjson.com/recipes?limit=12'
+      url = `${baseUrl}/recipes?limit=12`
     }
 
+    // 3. Daten abrufen
     const res = await fetch(url)
     if (!res.ok) throw new Error('Fehler beim Laden')
     const data = await res.json()
     
-    // Mapping der Daten
+    // 4. Mapping der Daten
     products.value = data.recipes.map(recipe => ({
       id: recipe.id,
       title: recipe.name,
