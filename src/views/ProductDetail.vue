@@ -1,23 +1,53 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { products } from '@/data.js'
-// Wir nutzen deinen schicken Button!
-import Button from '@/components/Button.vue' 
+import Button from '@/components/Button.vue'
 
 const route = useRoute()
-const product = computed(() => {
-  const id = parseInt(route.params.id)
-  return products.find(p => p.id === id)
+const product = ref(null)
+const loading = ref(true)
+const error = ref(null)
+
+onMounted(async () => {
+  try {
+    const id = route.params.id
+    const res = await fetch(`https://dummyjson.com/recipes/${id}`)
+    if (!res.ok) throw new Error('Rezept nicht gefunden')
+    const data = await res.json()
+    
+    product.value = {
+      id: data.id,
+      title: data.name,
+      category: data.cuisine,
+      time: data.prepTimeMinutes + ' min',
+      image: data.image,
+      description: data.instructions.join('\n\n') 
+    }
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
 <template>
   <div class="container py-5">
-    <div v-if="product" class="detail-card bg-white p-4 p-md-5 shadow-sm mx-auto">
-      
-      <div class="row align-items-center g-5">
-        <div class="col-md-6">
+    
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+    </div>
+
+    <div v-else-if="error" class="text-center py-5 text-white">
+      <h2>Oje! 😕</h2>
+      <p>{{ error }}</p>
+      <router-link to="/" class="text-white">Zurück zur Übersicht</router-link>
+    </div>
+
+    <div v-else-if="product" class="detail-card bg-white p-4 p-md-5 shadow-sm mx-auto">
+      <div class="row align-items-start g-5">
+        
+        <div class="col-md-4 offset-md-2">
           <img 
             :src="product.image" 
             :alt="product.title" 
@@ -33,10 +63,10 @@ const product = computed(() => {
           <h1 class="display-5 fw-bold mb-3 text-dark">{{ product.title }}</h1>
           
           <div class="d-flex align-items-center gap-2 text-muted fs-5 mb-4">
-            <span>⏱ Zubereitungszeit: <strong>{{ product.time }}</strong></span>
+            <span>⏱ Zubereitung: <strong>{{ product.time }}</strong></span>
           </div>
           
-          <p class="lead text-secondary mb-5" style="line-height: 1.8;">
+          <p class="lead text-secondary mb-5" style="line-height: 1.8; white-space: pre-line;">
             {{ product.description }}
           </p>
           
@@ -47,24 +77,16 @@ const product = computed(() => {
           </router-link>
         </div>
       </div>
-
     </div>
 
-    <div v-else class="text-center py-5 text-white">
-      <h2>Produkt nicht gefunden 😢</h2>
-      <router-link to="/" class="text-white">Zurück nach Hause</router-link>
-    </div>
   </div>
 </template>
 
 <style scoped>
-/* Die Box für die Details */
 .detail-card {
-  border-radius: 40px; /* Schön rund wie deine Karten */
+  border-radius: 40px;
   max-width: 1100px;
 }
-
-/* Das Bild */
 .detail-image {
   border-radius: 30px;
   object-fit: cover;
