@@ -38,21 +38,10 @@ const bannerStore = useBannerStore()
       </div>
     </div>
   </header>
-
-  <div class="search-wrapper mb-5">
-    <div class="search-box d-flex align-items-center gap-2 mx-auto rounded-pill bg-white shadow p-1" style="max-width: 600px;">
-      <input
-        class="form-control form-control-lg border-0 rounded-pill search-input"
-        type="text"
-        placeholder="Suche nach Rezepten..."
-        style="box-shadow: none !important;"
-      />
-      <button class="btn btn-cooked-search rounded-pill px-4 py-2 m-1">Finden</button>
-    </div>
-  </div>
 </template>
 
 <style scoped>
+/* --- Button --- */
 .cta-float {
   display: inline-block;
   background-color: #81801f;
@@ -72,9 +61,8 @@ const bannerStore = useBannerStore()
   color: white;
 }
 
-.position-relative {
-  position: relative;
-}
+/* --- Schließen Button --- */
+.position-relative { position: relative; }
 
 .btn-close-banner {
   position: absolute;
@@ -83,76 +71,89 @@ const bannerStore = useBannerStore()
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
-  width: 35px;
-  height: 35px;
+  width: 35px; height: 35px;
   border-radius: 50%;
   cursor: pointer;
   font-weight: bold;
   z-index: 10;
   transition: background 0.2s;
 }
+.btn-close-banner:hover { background: rgba(255, 255, 255, 0.4); }
 
-.btn-close-banner:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-/* --- Suche --- */
-.btn-cooked-search {
-  background-color: #81801f;
-  color: white;
-  font-weight: bold;
-  transition: background-color 0.2s;
-}
-.btn-cooked-search:hover {
-  background-color: #6b6a19;
-  color: white;
-}
-
-/* --- Hero Bereich --- */
+/* --- Hero Layout --- */
 .hero {
   background-color: transparent;
   padding-top: 2rem;
-  padding-bottom: 4rem;
+  padding-bottom: 6rem; /* Mehr Platz unten für das große Bild */
   color: #2c3e50;
+  overflow: hidden; /* WICHTIG: Damit das Bild nicht aus der Seite ragt */
 }
 
 .hero-title {
-  font-size: 3.5rem;
-  font-weight: 700;
+  font-size: 4.5rem;
+  font-weight: 900; 
   line-height: 1.1;
   color: white;
   margin-bottom: 1.5rem;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  text-shadow: 0 4px 20px rgba(0,0,0,0.15); 
+  letter-spacing: -1px;
 }
 
 .hero-sub {
-  font-size: 1.1rem;
-  color: white;
-  margin-bottom: 2rem;
-  max-width: 500px;
+  font-size: 1.3rem;
+  color: #fff; 
+  margin-bottom: 2.5rem;
+  max-width: 550px;
   font-weight: 500;
+  line-height: 1.6;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
 .hero-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  gap: 2rem;
   align-items: center;
 }
 
+/* --- DAS NEUE BILD DESIGN --- */
+.hero-media {
+  display: flex;
+  justify-content: flex-end; /* Rechtsbündig */
+}
+
 .hero-photo {
-  width: 75%;
+  /* Bild viel größer machen */
+  width: 95%; 
+  max-width: auto; 
   height: auto;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  
+
+  margin-right: -20%; 
+  transform: rotate(5deg); /* Leichte Drehung wirkt natürlicher */
+  
+  /* Starker Schatten für 3D-Effekt */
+  box-shadow: -15px 15px 40px rgba(0,0,0,0.2);
+  border: 8px solid rgba(255, 255, 255, 0.1);
 }
 
-@media (max-width: 768px) {
+/* --- Mobile Anpassung --- */
+@media (max-width: 992px) { /* Tablet & Handy */
   .hero-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Untereinander */
     text-align: center;
   }
   .hero-sub { margin: 0 auto 2rem auto; }
+  
+  /* Bild auf Handy wieder normalisieren */
+  .hero-media { justify-content: center; margin-top: 2rem; }
+  .hero-photo {
+    width: 80%;
+    margin-right: 0;
+    transform: rotate(0deg);
+    max-width: 400px;
+  }
 }
 </style>

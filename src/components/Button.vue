@@ -2,7 +2,7 @@
 defineProps({
   variant: {
     type: String,
-    default: 'accent' // Standard ist dein Olivgrün
+    default: 'accent'
   }
 })
 </script>
@@ -14,7 +14,6 @@ defineProps({
 </template>
 
 <style scoped>
-/* Basis-Design für ALLE Buttons */
 .btn-cooked {
   border: none;
   border-radius: 50px;

@@ -29,7 +29,12 @@
 }
 
 .brand-logo {
-  height: 40px;
+  height: 70px;
+  transition: transform 0.2s;
+}
+
+.brand-logo:hover {
+  transform: scale(1.05);
 }
 
 .button {

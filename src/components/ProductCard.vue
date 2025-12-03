@@ -39,16 +39,12 @@ defineEmits(['show-details'])
 </template>
 
 <style scoped>
-/* HIER DEFINIEREN WIR DIE NEUE RUNDUNG */
 .cooked-card {
-  /* 25px ist ein guter Wert für "deutlich runder, aber keine Pille" */
   border-radius: 25px;
-  /* Wichtig: overflow: hidden sorgt dafür, dass nichts über die runden Ecken hinaussteht */
   overflow: hidden;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Optional: Ein leichter Hover-Effekt, damit es sich interaktiv anfühlt */
 .cooked-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
