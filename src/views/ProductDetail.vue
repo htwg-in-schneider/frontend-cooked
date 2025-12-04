@@ -12,29 +12,19 @@ const error = ref(null)
 onMounted(async () => {
   try {
     const id = route.params.id
-    
+
     const res = await fetch(`${import.meta.env.VITE_API_URL}/${id}`)
-    
     if (!res.ok) throw new Error('Rezept nicht gefunden')
     const data = await res.json()
-    
+
     product.value = {
-  id: data.id,
-  title: data.title,
-  category: data.category,
-  time: data.prepTimeMinutes + ' min',
-  image: data.imageUrl,
-
-  // Beschreibung separat
-  description: data.description,
-
-  // Zubereitungsschritte (Liste)
-  instructions: data.instructions
-    ? data.instructions.split("\n")
-    : []
-}
-
-
+      id: data.id,
+      title: data.title,
+      category: data.category,
+      time: data.prepTimeMinutes + ' min',
+      image: data.imageUrl,
+      description: data.description
+    }
   } catch (e) {
     error.value = e.message
   } finally {
@@ -45,24 +35,30 @@ onMounted(async () => {
 
 <template>
   <div class="container py-5">
-    
+
+    <!-- Laden -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status"></div>
     </div>
 
+    <!-- Fehler -->
     <div v-else-if="error" class="text-center py-5 text-white">
       <h2>Oje! 😕</h2>
       <p>{{ error }}</p>
       <router-link to="/" class="text-white">Zurück zur Übersicht</router-link>
     </div>
 
+    <!-- Inhalt -->
     <div v-else-if="product" class="detail-card bg-white p-4 shadow-sm mx-auto">
-      
       <div class="row g-4">
         <div class="col-md-6">
-          <img :src="product.image" :alt="product.title" class="img-fluid w-100 detail-image shadow-sm" />
+          <img
+            :src="product.image"
+            :alt="product.title"
+            class="img-fluid w-100 detail-image shadow-sm"
+          />
         </div>
-        
+
         <div class="col-md-6 d-flex flex-column">
           <div>
             <div class="badge bg-light text-dark mb-2 px-3 py-2 rounded-pill border">
@@ -73,14 +69,12 @@ onMounted(async () => {
               ⏱ Zubereitung: <strong>{{ product.time }}</strong>
             </div>
           </div>
-          
+
           <h5 class="mb-3">Zubereitung:</h5>
-          <ol class="instructions-list ps-3 mb-4">
-            <li v-for="(step, index) in product.instructions" :key="index" class="mb-2">
-              {{ step }}
-            </li>
-          </ol>
-          
+          <p class="instructions-text mb-4">
+            {{ product.description }}
+          </p>
+
           <div class="mt-auto">
             <router-link to="/" class="text-decoration-none">
               <Button variant="accent">← Zurück zur Übersicht</Button>
@@ -94,19 +88,29 @@ onMounted(async () => {
                 </Button>
               </router-link>
             </div>
-
           </div>
         </div>
       </div>
 
       <ProductReviews :productId="product.id" />
-
     </div>
   </div>
 </template>
 
 <style scoped>
-.detail-card { border-radius: 30px; max-width: 1100px; }
-.detail-image { border-radius: 20px; object-fit: cover; min-height: 300px; max-height: 500px; }
-.instructions-list li { color: #555; line-height: 1.5; }
+.detail-card {
+  border-radius: 30px;
+  max-width: 1100px;
+}
+.detail-image {
+  border-radius: 20px;
+  object-fit: cover;
+  min-height: 300px;
+  max-height: 500px;
+}
+.instructions-text {
+  color: #555;
+  line-height: 1.5;
+  white-space: pre-line; /* übernimmt Zeilenumbrüche */
+}
 </style>

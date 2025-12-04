@@ -15,30 +15,31 @@ const loading = ref(true)
 async function fetchReviews() {
   loading.value = true
   try {
-    // 1. Basis-URL aus .env holen
+    // Basis-URL aus .env, z.B. http://localhost:8081/api/recipes
     const baseUrl = import.meta.env.VITE_API_URL
-    
-    const res = await fetch(`${baseUrl.replace("recipes","review/product")}/${props.productId}`)
+    // auf /api/review/product/... umbauen
+    const reviewBaseUrl = baseUrl.replace('recipes', 'review/product')
 
-    
+    const res = await fetch(`${reviewBaseUrl}/${props.productId}`)
+
     if (!res.ok) {
       reviews.value = []
       return
     }
-    
+
     const data = await res.json()
-    reviews.value = data.comments
+    // Backend liefert direkt ein Array von Reviews
+    reviews.value = data
   } catch (e) {
     console.error('Fehler beim Laden der Reviews', e)
+    reviews.value = []
   } finally {
     loading.value = false
   }
 }
 
 // Beim Start laden
-onMounted(() => {
-  fetchReviews()
-})
+onMounted(fetchReviews)
 
 // Falls sich die ID ändert, neu laden
 watch(() => props.productId, () => {
@@ -60,18 +61,24 @@ watch(() => props.productId, () => {
 
     <!-- Liste der Bewertungen -->
     <div v-else class="review-list">
-      <div v-for="review in reviews" :key="review.id" class="review-card mb-3 bg-light p-3 rounded-4">
+      <div
+        v-for="review in reviews"
+        :key="review.id"
+        class="review-card mb-3 bg-light p-3 rounded-4"
+      >
         <div class="d-flex align-items-center mb-2">
-          <!-- Kleiner Avatar (Fake) -->
-          <div class="avatar bg-white text-secondary fw-bold rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm">
-            {{ review.user.username.charAt(0).toUpperCase() }}
+          <!-- Kleiner Avatar (aus userName) -->
+          <div
+            class="avatar bg-white text-secondary fw-bold rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm"
+          >
+            {{ review.userName?.charAt(0)?.toUpperCase() }}
           </div>
           <div>
-            <h6 class="m-0 fw-bold text-dark">{{ review.user.username }}</h6>
-            <small class="text-muted">Verifizierter Genießer</small>
+            <h6 class="m-0 fw-bold text-dark">{{ review.userName }}</h6>
+            <small class="text-muted">★ {{ review.stars }}/5</small>
           </div>
         </div>
-        <p class="mb-0 text-secondary">{{ review.body }}</p>
+        <p class="mb-0 text-secondary">{{ review.text }}</p>
       </div>
     </div>
   </div>
