@@ -9,7 +9,7 @@
         </router-link>
         
         <div class="d-flex flex-wrap gap-2 ms-auto">
-          <router-link to="/" class="button" active-class="active">Home</router-link>
+          <router-link to="/home" class="button" active-class="active">Home</router-link>
           <a class="button" href="#">Kategorien</a>
           <a class="button" href="#">Über uns</a>
           
