@@ -4,11 +4,11 @@ import FooterLink from './FooterLink.vue'
 
 <template>
   <footer class="text-center py-5 footer-bg">
-    
     <div class="mb-3">
-      <FooterLink href="#">Impressum</FooterLink>
-      <FooterLink href="#">Datenschutz</FooterLink>
-      <FooterLink href="#">Kontakt</FooterLink>
+      <FooterLink to="/impressum">Impressum</FooterLink>
+<FooterLink to="/datenschutz">Datenschutz</FooterLink>
+<FooterLink to="/kontakt">Kontakt</FooterLink>
+
     </div>
 
     <p class="small text-muted">

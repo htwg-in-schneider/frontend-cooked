@@ -1,6 +1,8 @@
 <script setup>
+import { RouterLink } from 'vue-router'
+
 defineProps({
-  href: {
+  to: {
     type: String,
     required: true
   }
@@ -8,23 +10,22 @@ defineProps({
 </script>
 
 <template>
-  <a :href="href" class="footer-link">
+  <RouterLink :to="to" class="footer-link">
     <slot />
-  </a>
+  </RouterLink>
 </template>
 
 <style scoped>
 .footer-link {
-  color: #6c757d;      /* Dezent grau */
+  color: #6c757d;
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.2s;
-  margin: 0 10px;      /* Abstand zwischen den Links */
+  margin: 0 10px;
   display: inline-block;
 }
-
 .footer-link:hover {
-  color: #81801f;      /* Oliv-Farbe beim Hover */
+  color: #81801f;
   text-decoration: underline;
 }
 </style>
