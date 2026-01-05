@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 
 const users = ref([])
 const loading = ref(false)
@@ -14,17 +14,22 @@ const saveError = ref('')
 
 // ---- API Root (aus VITE_API_URL ableiten) ----
 function getApiRoot() {
-  // VITE_API_URL = http://localhost:8081/api/recipes
-  const base = import.meta.env.VITE_API_URL || ''
-  // -> http://localhost:8081/api
+  // Beispiel: VITE_API_URL = http://localhost:8081/api/recipes
+  // => apiRoot = http://localhost:8081/api
+  const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
   return base.replace(/\/(product|products|recipe|recipes)$/i, '')
 }
 
 // ---- Debounce: Suche nicht bei jedem Buchstaben sofort ----
 let searchTimer = null
+
 watch(search, () => {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(() => loadUsers(), 300)
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(searchTimer)
 })
 
 async function loadUsers() {
@@ -53,8 +58,8 @@ async function loadUsers() {
 }
 
 function clearSearch() {
+  // watch(search) triggert dann automatisch loadUsers()
   search.value = ''
-  // loadUsers wird durch watch(search) eh nochmal getriggert
 }
 
 function startEdit(u) {
@@ -80,11 +85,13 @@ function validateForm() {
 
   if (!name) return 'Name darf nicht leer sein'
   if (name.length < 2) return 'Name ist zu kurz (mind. 2 Zeichen)'
+
   if (!email) return 'E-Mail darf nicht leer sein'
-  // simple, aber ok:
   if (!/^\S+@\S+\.\S+$/.test(email)) return 'E-Mail muss gültig sein'
+
   if (!role) return 'Rolle darf nicht leer sein'
   if (role !== 'ADMIN' && role !== 'USER') return 'Rolle muss ADMIN oder USER sein'
+
   return ''
 }
 
@@ -118,6 +125,7 @@ async function saveUser(id) {
 
     const updated = await res.json()
     users.value = users.value.map(u => (u.id === id ? updated : u))
+
     cancelEdit()
   } catch (e) {
     console.error(e)
@@ -133,10 +141,14 @@ onMounted(loadUsers)
 <template>
   <div class="container py-5">
     <div class="bg-white shadow-sm p-4 p-md-5 mx-auto admin-card">
-      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+      <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3"
+      >
         <div>
           <h1 class="fw-bold mb-1">Admin – Nutzerverwaltung</h1>
-          <p class="text-muted mb-0">Admins können Nutzer sehen und bearbeiten (kein Anlegen nötig).</p>
+          <p class="text-muted mb-0">
+            Admins können Nutzer sehen und bearbeiten (kein Anlegen nötig).
+          </p>
         </div>
       </div>
 
@@ -149,9 +161,6 @@ onMounted(loadUsers)
             type="text"
             placeholder="Suchen (Name oder E-Mail)…"
           />
-          <div class="small text-muted mt-1">
-            Tipp: Suche funktioniert auf <b>Name</b> und <b>E-Mail</b>.
-          </div>
         </div>
 
         <div class="col-12 col-md-auto d-flex gap-2">
@@ -277,12 +286,13 @@ onMounted(loadUsers)
 .search-input {
   border-radius: 999px;
 }
-.pill-input, .pill-select {
+.pill-input,
+.pill-select {
   border-radius: 999px;
   background: #f8f8f0;
 }
 
-/* Dropdown schöner: etwas “soft” */
+/* Dropdown schöner: soft */
 .pill-select {
   border: 1px solid rgba(107, 106, 25, 0.25);
 }
