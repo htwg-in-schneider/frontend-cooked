@@ -6,6 +6,18 @@ defineProps({
 })
 
 defineEmits(['show-details'])
+
+const stars = [1, 2, 3, 4, 5]
+
+function isStarActive(rating, value) {
+  if (!rating) return false
+  return rating >= value - 0.25
+}
+
+function formatRating(value) {
+  if (!value) return '0.0'
+  return Number(value).toFixed(1)
+}
 </script>
 
 <template>
@@ -24,6 +36,22 @@ defineEmits(['show-details'])
       
       <div class="d-flex align-items-center gap-2 text-muted small mb-3">
         <span>Zeit: {{ product.time }}</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 mb-3 rating-row">
+        <div class="stars">
+          <span
+            v-for="s in stars"
+            :key="s"
+            class="star"
+            :class="{ active: isStarActive(product.ratingAvg, s) }"
+          >
+            &#9733;
+          </span>
+        </div>
+        <span class="text-muted small">
+          {{ product.ratingCount ? formatRating(product.ratingAvg) : 'Keine Bewertungen' }}
+        </span>
       </div>
 
       <Button
@@ -48,5 +76,24 @@ defineEmits(['show-details'])
 .cooked-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+}
+
+.rating-row {
+  color: #6b6a19;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star {
+  color: #d3d3d3;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.star.active {
+  color: #6b6a19;
 }
 </style>

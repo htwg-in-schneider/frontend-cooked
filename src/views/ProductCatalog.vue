@@ -10,11 +10,15 @@ const router = useRouter()
 const products = ref([])
 const loading = ref(true)
 const error = ref(null)
+const activeSort = ref('published')
 
 // Die Haupt-Funktion zum Laden der Produkte
 async function fetchProducts(filters = {}) {
   loading.value = true
   error.value = null
+  if (filters.sortBy) {
+    activeSort.value = filters.sortBy
+  }
   
   try {
     // 1. Basis-URL aus der .env Datei laden (z.B. http://localhost:8081/api/product)
@@ -36,17 +40,42 @@ async function fetchProducts(filters = {}) {
     if (!res.ok) throw new Error('Fehler beim Laden')
     
     const data = await res.json()
-    
-    // 4. Mapping: Backend-Daten -> Frontend-Struktur
-    // WICHTIG: Dein Backend liefert direkt das Array (data), kein "recipes"-Objekt!
-    products.value = data.map(recipe => ({
-      id: recipe.id,
-      title: recipe.title,           // Backend: title
-      category: recipe.category,     // Backend: category
-      time: recipe.prepTimeMinutes + ' min', // Backend: prepTimeMinutes
-      image: recipe.imageUrl,        // Backend: imageUrl
-      description: recipe.description // Backend: description
-    }))
+
+    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const recipes = Array.isArray(data) ? data : []
+
+    const enriched = await Promise.all(
+      recipes.map(async recipe => {
+        let ratingAvg = 0
+        let ratingCount = 0
+        try {
+          const reviewRes = await fetch(`${apiRoot}/review/product/${recipe.id}`)
+          if (reviewRes.ok) {
+            const reviews = await reviewRes.json()
+            if (Array.isArray(reviews) && reviews.length) {
+              ratingCount = reviews.length
+              ratingAvg = reviews.reduce((sum, r) => sum + (Number(r.stars) || 0), 0) / ratingCount
+            }
+          }
+        } catch {
+          // ignore rating errors
+        }
+
+        return {
+          id: recipe.id,
+          title: recipe.title,
+          category: recipe.category,
+          time: recipe.prepTimeMinutes + ' min',
+          durationMinutes: Number(recipe.prepTimeMinutes) || 0,
+          image: recipe.imageUrl,
+          description: recipe.description,
+          ratingAvg,
+          ratingCount
+        }
+      })
+    )
+
+    products.value = sortProducts(enriched, activeSort.value)
 
   } catch (e) {
     error.value = e.message
@@ -66,6 +95,33 @@ function handleFilterChange(newFilters) {
   fetchProducts(newFilters)
 }
 
+function sortProducts(list, sortBy) {
+  const sorted = [...list]
+  if (sortBy === 'duration_asc') {
+    sorted.sort((a, b) => (a.durationMinutes || 0) - (b.durationMinutes || 0))
+    return sorted
+  }
+  if (sortBy === 'duration_desc') {
+    sorted.sort((a, b) => (b.durationMinutes || 0) - (a.durationMinutes || 0))
+    return sorted
+  }
+  if (sortBy === 'rating_asc') {
+    sorted.sort((a, b) => (a.ratingAvg || 0) - (b.ratingAvg || 0))
+    return sorted
+  }
+  if (sortBy === 'rating_desc') {
+    sorted.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0))
+    return sorted
+  }
+  if (sortBy === 'published_asc') {
+    sorted.sort((a, b) => (a.id || 0) - (b.id || 0))
+    return sorted
+  }
+  // published_desc: newest first (higher id)
+  sorted.sort((a, b) => (b.id || 0) - (a.id || 0))
+  return sorted
+}
+
 function goToDetail(product) {
   router.push({ name: 'product-detail', params: { id: product.id } })
 }
@@ -75,23 +131,23 @@ function goToDetail(product) {
   <SpecialBanner />
 
   <main class="container">
-    
-    <div :class="{ 'mt-huge': !false }"> <ProductFilter @filter-change="handleFilterChange" />
+    <div class="text-center mb-4">
+      <h2 class="display-6 fw-bold text-dark mb-3">
+        Unsere Rezepte
+      </h2>
+
+      <router-link to="/create" class="text-decoration-none">
+        <Button variant="accent">
+          + Neues Rezept
+        </Button>
+      </router-link>
     </div>
 
-    <section class="py-5">
-      
-      <div class="text-center mb-5">
-        <h2 class="display-6 fw-bold text-dark mb-3">
-          Unsere Rezepte
-        </h2>
-        
-        <router-link to="/create" class="text-decoration-none">
-          <Button variant="accent">
-            + Neues Rezept
-          </Button>
-        </router-link>
-      </div>
+    <div :class="{ 'mt-huge': !false }">
+      <ProductFilter @filter-change="handleFilterChange" />
+    </div>
+
+    <section class="py-4">
       
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>

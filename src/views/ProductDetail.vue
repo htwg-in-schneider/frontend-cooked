@@ -17,6 +17,14 @@ const error = ref(null)
 const deleting = ref(false)
 const deleteError = ref('')
 
+function descriptionToSteps(description) {
+  return (description || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((text) => ({ text, ingredients: [] }))
+}
+
 async function loadProduct() {
   loading.value = true
   error.value = null
@@ -28,13 +36,20 @@ async function loadProduct() {
 
     const data = await res.json()
 
+    const steps = Array.isArray(data.steps) && data.steps.length
+      ? data.steps
+      : descriptionToSteps(data.description)
+    const ingredients = Array.isArray(data.ingredients) ? data.ingredients : []
+
     product.value = {
       id: data.id,
       title: data.title,
       category: data.category,
       time: data.prepTimeMinutes + ' min',
       image: data.imageUrl,
-      description: data.description
+      description: data.description,
+      ingredients,
+      steps
     }
   } catch (e) {
     error.value = e.message
@@ -99,6 +114,18 @@ onMounted(loadProduct)
             :alt="product.title"
             class="img-fluid w-100 detail-image shadow-sm"
           />
+
+          <div class="mt-4">
+            <h5 class="mb-3">Zutaten</h5>
+            <ul v-if="product.ingredients && product.ingredients.length" class="ingredient-list">
+              <li v-for="(ing, idx) in product.ingredients" :key="idx">
+                <span v-if="ing.amount" class="fw-semibold">{{ ing.amount }}</span>
+                <span v-if="ing.amount"> </span>
+                <span>{{ ing.name }}</span>
+              </li>
+            </ul>
+            <p v-else class="text-muted small mb-0">Keine Zutaten angegeben.</p>
+          </div>
         </div>
 
         <div class="col-md-6 d-flex flex-column">
@@ -114,10 +141,20 @@ onMounted(loadProduct)
             </div>
           </div>
 
-          <h5 class="mb-3">Zubereitung</h5>
-          <p class="instructions-text mb-4">
-            {{ product.description }}
-          </p>
+          <div class="mb-4">
+            <h5 class="mb-3">Zubereitung</h5>
+            <div v-if="product.steps && product.steps.length" class="steps">
+              <div v-for="(step, idx) in product.steps" :key="idx" class="step-item">
+                <div class="fw-semibold mb-1">Schritt {{ idx + 1 }}</div>
+                <div class="instructions-text mb-2">
+                  {{ step.text }}
+                </div>
+              </div>
+            </div>
+            <p v-else class="instructions-text mb-0">
+              {{ product.description }}
+            </p>
+          </div>
 
           <div class="mt-auto">
             <router-link to="/" class="text-decoration-none">
@@ -176,6 +213,25 @@ onMounted(loadProduct)
   color: #555;
   line-height: 1.5;
   white-space: pre-line;
+}
+
+.ingredient-list {
+  padding-left: 18px;
+  margin-bottom: 0;
+  color: #555;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.step-item {
+  padding: 12px 14px;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  background: #fafaf3;
 }
 
 /* SCHLICHTER DELETE BUTTON – COOKED STYLE */

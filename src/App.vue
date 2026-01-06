@@ -23,7 +23,7 @@ html, body {
 }
 
 body {
-  background: linear-gradient(to bottom, #bab86c 0%, #bab86c 15%, #f5f5bc 100%);
+  background: linear-gradient(to bottom,#BAB872 40%, #f5f5bc 100%);
   background-attachment: fixed;
   font-family: "Comfortaa", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }

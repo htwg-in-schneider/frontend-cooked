@@ -11,6 +11,7 @@ const emit = defineEmits(['filter-change'])
 // Such-/Filterwerte
 const searchQuery = ref('')
 const selectedCategory = ref('')
+const selectedSort = ref('published_desc')
 
 // Kategorien, normalisiert auf { code, label }
 const categories = ref([])
@@ -65,7 +66,8 @@ onMounted(async () => {
 function emitFilters() {
   emit('filter-change', {
     name: searchQuery.value,
-    category: selectedCategory.value
+    category: selectedCategory.value,
+    sortBy: selectedSort.value
   })
 }
 
@@ -73,6 +75,7 @@ function emitFilters() {
 function resetFilter() {
   searchQuery.value = ''
   selectedCategory.value = ''
+  selectedSort.value = 'published_desc'
   emitFilters()
 }
 </script>
@@ -84,24 +87,24 @@ function resetFilter() {
   >
     <div class="row g-3 align-items-end">
       <!-- Suche -->
-      <div class="col-md-5">
+      <div class="col-md-4">
         <label class="form-label small text-muted fw-bold">Suche</label>
         <input
           v-model="searchQuery"
           @input="emitFilters"
           type="text"
-          class="form-control rounded-pill px-3 bg-light border-0"
+          class="form-control rounded-pill px-3 bg-light border-0 filter-input"
           placeholder="z.B. Pasta..."
         >
       </div>
 
       <!-- Kategorie -->
-      <div class="col-md-5">
+      <div class="col-md-3">
         <label class="form-label small text-muted fw-bold">Kategorie</label>
         <select
           v-model="selectedCategory"
           @change="emitFilters"
-          class="form-select rounded-pill px-3 bg-light border-0"
+          class="form-select rounded-pill px-3 bg-light border-0 filter-input"
         >
           <option value="">Alle Kategorien</option>
           <option
@@ -111,6 +114,23 @@ function resetFilter() {
           >
             {{ tag.label }}
           </option>
+        </select>
+      </div>
+
+      <!-- Sortieren -->
+      <div class="col-md-3">
+        <label class="form-label small text-muted fw-bold">Sortieren</label>
+        <select
+          v-model="selectedSort"
+          @change="emitFilters"
+          class="form-select rounded-pill px-3 bg-light border-0 filter-input"
+        >
+          <option value="published_desc">Neueste</option>
+          <option value="published_asc">Älteste</option>
+          <option value="duration_asc">Dauer kurz</option>
+          <option value="duration_desc">Dauer lang</option>
+          <option value="rating_desc">Bewertung hoch</option>
+          <option value="rating_asc">Bewertung niedrig</option>
         </select>
       </div>
 
@@ -140,6 +160,21 @@ function resetFilter() {
 }
 
 /* Wenn der Banner weg ist, schieben wir den Filter runter */
+.filter-input {
+  height: 38px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.filter-input:focus,
+.filter-input:active {
+  outline: none;
+}
+
+.filter-input:focus {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
 .mt-150 {
   margin-top: 120px !important;
 }
