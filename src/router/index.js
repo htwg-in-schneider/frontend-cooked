@@ -14,7 +14,6 @@ import AdminTransactions from '../views/AdminTransactions.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // Startseite = Rezepte
     { path: '/', name: 'catalog', component: ProductCatalog },
 
     { path: '/kontakt', name: 'kontakt', component: Kontakt },
@@ -23,20 +22,18 @@ const router = createRouter({
     { path: '/create', name: 'create-product', component: CreateProduct },
     { path: '/edit/:id', name: 'edit-product', component: EditProduct },
 
-    { path: '/profile', name: 'user-profile', component: UserProfile },
+    // Profile muss Login erzwingen
+    { path: '/profile', name: 'user-profile', component: UserProfile, meta: { requiresAuth: true } },
 
     { path: '/impressum', name: 'impressum', component: Impressum },
     { path: '/datenschutz', name: 'datenschutz', component: Datenschutz },
 
-    { path: '/admin/users', name: 'admin-users', component: AdminUsers },
+    // Admin Bereiche
+    { path: '/admin/users', name: 'admin-users', component: AdminUsers, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions, meta: { requiresAuth: true, requiresAdmin: true } },
 
-    // optional: falls jemand /recipes aufruft -> umleiten auf /
     { path: '/recipes', redirect: '/' },
-
-    // optional: falls jemand /home aufruft -> umleiten auf /
-    { path: '/home', redirect: '/' },
-    { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions }
-
+    { path: '/home', redirect: '/' }
   ]
 })
 
