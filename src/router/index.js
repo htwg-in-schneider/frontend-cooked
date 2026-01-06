@@ -9,6 +9,7 @@ import Kontakt from '../views/Kontakt.vue'
 import Impressum from '../views/Impressum.vue'
 import Datenschutz from '../views/Datenschutz.vue'
 import AdminUsers from '../views/AdminUsers.vue'
+import AdminTransactions from '../views/AdminTransactions.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,7 +35,9 @@ const router = createRouter({
     { path: '/recipes', redirect: '/' },
 
     // optional: falls jemand /home aufruft -> umleiten auf /
-    { path: '/home', redirect: '/' }
+    { path: '/home', redirect: '/' },
+    { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions }
+
   ]
 })
 
