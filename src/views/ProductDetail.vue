@@ -1,11 +1,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
 import ProductReviews from '@/components/ProductReviews.vue'
+import { authFetch } from '@/services/apiAuth'
 
 const route = useRoute()
 const router = useRouter()
+const { getAccessTokenSilently } = useAuth0()
 
 const product = ref(null)
 const loading = ref(true)
@@ -53,7 +56,8 @@ async function deleteRecipe() {
   deleting.value = true
 
   try {
-    const res = await fetch(
+    const res = await authFetch(
+      getAccessTokenSilently,
       `${import.meta.env.VITE_API_URL}/${product.value.id}`,
       { method: 'DELETE' }
     )
@@ -81,7 +85,7 @@ onMounted(loadProduct)
 
     <!-- Fehler -->
     <div v-else-if="error" class="text-center py-5 text-white">
-      <h2>Oje 😕</h2>
+      <h2>Oje!</h2>
       <p>{{ error }}</p>
       <router-link to="/" class="text-white">Zurück zur Übersicht</router-link>
     </div>
@@ -106,7 +110,7 @@ onMounted(loadProduct)
             <h1 class="fw-bold mb-2 text-dark">{{ product.title }}</h1>
 
             <div class="text-muted mb-4">
-              ⏱ Zubereitung: <strong>{{ product.time }}</strong>
+              Zubereitung: <strong>{{ product.time }}</strong>
             </div>
           </div>
 
@@ -117,7 +121,7 @@ onMounted(loadProduct)
 
           <div class="mt-auto">
             <router-link to="/" class="text-decoration-none">
-              <Button variant="accent">← Zurück zur Übersicht</Button>
+              <Button variant="accent">Zurück zur Übersicht</Button>
             </router-link>
 
             <div class="mt-4 pt-4 border-top">

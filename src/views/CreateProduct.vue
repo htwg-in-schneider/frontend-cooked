@@ -1,9 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
+import { authFetch } from '@/services/apiAuth'
 
 const router = useRouter()
+const { getAccessTokenSilently } = useAuth0()
 
 const defaultImage = 'https://placehold.co/600x400?text=Neues+Rezept'
 
@@ -124,7 +127,7 @@ async function createProduct() {
       description: form.value.instructions.trim()
     }
 
-    const res = await fetch(`${baseUrl}`, {
+    const res = await authFetch(getAccessTokenSilently, `${baseUrl}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

@@ -1,10 +1,14 @@
-import { useAuth0 } from '@auth0/auth0-vue'
 import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
 
-export function setupGuards(router) {
+export function setupGuards(router, getAuth0) {
   router.beforeEach(async (to) => {
-    const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
+    const auth0 = getAuth0?.()
+    if (!auth0) {
+      return true
+    }
+
+    const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = auth0
     const authStore = useAuthStore()
 
     // 1) Wenn Route Auth benötigt -> Login erzwingen

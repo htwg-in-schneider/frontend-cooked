@@ -23,7 +23,7 @@ defineEmits(['show-details'])
       <h3 class="card-title h5">{{ product.title }}</h3>
       
       <div class="d-flex align-items-center gap-2 text-muted small mb-3">
-        <span>⏱ {{ product.time }}</span>
+        <span>Zeit: {{ product.time }}</span>
       </div>
 
       <Button

@@ -1,6 +1,9 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
+import { useAuth0 } from '@auth0/auth0-vue'
+import { authFetch } from '@/services/apiAuth'
 
+const { getAccessTokenSilently } = useAuth0()
 const users = ref([])
 const loading = ref(false)
 const error = ref('')
@@ -44,7 +47,7 @@ async function loadUsers() {
       ? `${apiRoot}/users?search=${encodeURIComponent(q)}`
       : `${apiRoot}/users`
 
-    const res = await fetch(url)
+    const res = await authFetch(getAccessTokenSilently, url)
     if (!res.ok) throw new Error(await res.text())
 
     users.value = await res.json()
@@ -108,7 +111,7 @@ async function saveUser(id) {
   try {
     const apiRoot = getApiRoot()
 
-    const res = await fetch(`${apiRoot}/users/${id}`, {
+    const res = await authFetch(getAccessTokenSilently, `${apiRoot}/users/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

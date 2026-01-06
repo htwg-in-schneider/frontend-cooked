@@ -19,8 +19,8 @@ const router = createRouter({
     { path: '/kontakt', name: 'kontakt', component: Kontakt },
 
     { path: '/product/:id', name: 'product-detail', component: ProductDetail },
-    { path: '/create', name: 'create-product', component: CreateProduct },
-    { path: '/edit/:id', name: 'edit-product', component: EditProduct },
+    { path: '/create', name: 'create-product', component: CreateProduct, meta: { requiresAuth: true } },
+    { path: '/edit/:id', name: 'edit-product', component: EditProduct, meta: { requiresAuth: true } },
 
     // Profile muss Login erzwingen
     { path: '/profile', name: 'user-profile', component: UserProfile, meta: { requiresAuth: true } },

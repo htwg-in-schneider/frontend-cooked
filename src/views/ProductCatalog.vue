@@ -103,7 +103,7 @@ function goToDetail(product) {
       </div>
 
       <div v-else-if="products.length === 0" class="text-center py-5 text-muted">
-        <p class="fs-4">Keine Rezepte gefunden 🍽️</p>
+        <p class="fs-4">Keine Rezepte gefunden.</p>
         <button class="btn btn-link" @click="fetchProducts()">Alle anzeigen</button>
       </div>
 

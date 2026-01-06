@@ -1,10 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
+import { authFetch } from '@/services/apiAuth'
 
 const route = useRoute()
 const router = useRouter()
+const { getAccessTokenSilently } = useAuth0()
 
 const form = ref({
   title: '',
@@ -52,7 +55,7 @@ async function updateProduct() {
     const baseUrl = import.meta.env.VITE_API_URL
     const id = route.params.id
 
-    const res = await fetch(`${baseUrl}/${id}`, {
+    const res = await authFetch(getAccessTokenSilently, `${baseUrl}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       // Mapping FRONTEND → BACKEND-Propertynamen
@@ -85,7 +88,7 @@ async function deleteProduct() {
     const baseUrl = import.meta.env.VITE_API_URL
     const id = route.params.id
 
-    const res = await fetch(`${baseUrl}/${id}`, {
+    const res = await authFetch(getAccessTokenSilently, `${baseUrl}/${id}`, {
       method: 'DELETE'
     })
 
@@ -114,7 +117,7 @@ async function deleteProduct() {
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold m-0">Rezept bearbeiten</h2>
         <button @click="deleteProduct" class="btn btn-outline-danger rounded-pill px-3">
-          🗑 Löschen
+          Löschen
         </button>
       </div>
 
