@@ -19,7 +19,6 @@ import FooterLink from './FooterLink.vue'
 
 <style scoped>
 .footer-bg {
-  background-color: #e6e6ab;
   margin-top: 50px;
 }
 </style>

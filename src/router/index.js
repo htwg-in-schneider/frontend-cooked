@@ -14,10 +14,9 @@ import AdminTransactions from '../views/AdminTransactions.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // ✅ Startseite = Rezepte
+    // Startseite = Rezepte
     { path: '/', name: 'catalog', component: ProductCatalog },
 
-    // ✅ Kontakt EXTRA Route (nur über Footer)
     { path: '/kontakt', name: 'kontakt', component: Kontakt },
 
     { path: '/product/:id', name: 'product-detail', component: ProductDetail },

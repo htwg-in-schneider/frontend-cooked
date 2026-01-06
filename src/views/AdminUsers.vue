@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 
 const users = ref([])
 const loading = ref(false)
@@ -8,19 +8,38 @@ const search = ref('')
 
 // Edit-State
 const editingId = ref(null)
-const editForm = ref({ name: '', email: '', role: '' })
+const editForm = ref({ name: '', email: '', role: 'USER' })
 const saveLoading = ref(false)
 const saveError = ref('')
+
+// ---- API Root (aus VITE_API_URL ableiten) ----
+function getApiRoot() {
+  // Beispiel: VITE_API_URL = http://localhost:8081/api/recipes
+  // => apiRoot = http://localhost:8081/api
+  const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+  return base.replace(/\/(product|products|recipe|recipes)$/i, '')
+}
+
+// ---- Debounce: Suche nicht bei jedem Buchstaben sofort ----
+let searchTimer = null
+
+watch(search, () => {
+  clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => loadUsers(), 300)
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(searchTimer)
+})
 
 async function loadUsers() {
   loading.value = true
   error.value = ''
 
   try {
-    const productBase = import.meta.env.VITE_API_URL
-    const apiRoot = productBase.replace(/\/(product|products|recipes)$/, '')
-
+    const apiRoot = getApiRoot()
     const q = search.value.trim()
+
     const url = q
       ? `${apiRoot}/users?search=${encodeURIComponent(q)}`
       : `${apiRoot}/users`
@@ -30,31 +49,32 @@ async function loadUsers() {
 
     users.value = await res.json()
   } catch (e) {
-    error.value = 'Konnte Nutzer nicht laden.'
     console.error(e)
+    error.value = 'Konnte Nutzer nicht laden.'
+    users.value = []
   } finally {
     loading.value = false
   }
 }
 
 function clearSearch() {
+  // watch(search) triggert dann automatisch loadUsers()
   search.value = ''
-  loadUsers()
 }
 
 function startEdit(u) {
   saveError.value = ''
   editingId.value = u.id
   editForm.value = {
-    name: u.name ?? '',
-    email: u.email ?? '',
-    role: u.role ?? 'USER'
+    name: (u.name ?? '').toString(),
+    email: (u.email ?? '').toString(),
+    role: (u.role ?? 'USER').toString()
   }
 }
 
 function cancelEdit() {
   editingId.value = null
-  editForm.value = { name: '', email: '', role: '' }
+  editForm.value = { name: '', email: '', role: 'USER' }
   saveError.value = ''
 }
 
@@ -64,9 +84,14 @@ function validateForm() {
   const role = editForm.value.role.trim()
 
   if (!name) return 'Name darf nicht leer sein'
+  if (name.length < 2) return 'Name ist zu kurz (mind. 2 Zeichen)'
+
   if (!email) return 'E-Mail darf nicht leer sein'
-  if (!email.includes('@')) return 'E-Mail muss gültig sein'
+  if (!/^\S+@\S+\.\S+$/.test(email)) return 'E-Mail muss gültig sein'
+
   if (!role) return 'Rolle darf nicht leer sein'
+  if (role !== 'ADMIN' && role !== 'USER') return 'Rolle muss ADMIN oder USER sein'
+
   return ''
 }
 
@@ -81,8 +106,7 @@ async function saveUser(id) {
   saveError.value = ''
 
   try {
-    const productBase = import.meta.env.VITE_API_URL
-    const apiRoot = productBase.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
 
     const res = await fetch(`${apiRoot}/users/${id}`, {
       method: 'PUT',
@@ -95,20 +119,17 @@ async function saveUser(id) {
     })
 
     if (!res.ok) {
-      // Backend schickt ResponseStatusException Texte -> wir zeigen sie an
       const txt = await res.text()
       throw new Error(txt || 'Speichern fehlgeschlagen')
     }
 
     const updated = await res.json()
-
-    // Liste lokal updaten (ohne neu laden)
     users.value = users.value.map(u => (u.id === id ? updated : u))
 
     cancelEdit()
   } catch (e) {
     console.error(e)
-    saveError.value = (e?.message || 'Speichern fehlgeschlagen')
+    saveError.value = e?.message || 'Speichern fehlgeschlagen'
   } finally {
     saveLoading.value = false
   }
@@ -120,27 +141,34 @@ onMounted(loadUsers)
 <template>
   <div class="container py-5">
     <div class="bg-white shadow-sm p-4 p-md-5 mx-auto admin-card">
-      <h1 class="fw-bold mb-3">Admin – Nutzerverwaltung</h1>
-      <p class="text-muted mb-4">Übersicht aller Nutzer (Stammdaten).</p>
+      <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3"
+      >
+        <div>
+          <h1 class="fw-bold mb-1">Admin – Nutzerverwaltung</h1>
+          <p class="text-muted mb-0">
+            Admins können Nutzer sehen und bearbeiten (kein Anlegen nötig).
+          </p>
+        </div>
+      </div>
 
       <!-- Suche -->
       <div class="row g-2 align-items-center mb-4">
         <div class="col-12 col-md">
           <input
             v-model="search"
-            class="form-control"
+            class="form-control search-input"
             type="text"
             placeholder="Suchen (Name oder E-Mail)…"
-            @input="loadUsers"
           />
         </div>
 
         <div class="col-12 col-md-auto d-flex gap-2">
-          <button class="btn btn-outline-secondary" type="button" @click="loadUsers">
+          <button class="btn btn-outline-secondary pill" type="button" @click="loadUsers">
             Suchen
           </button>
           <button
-            class="btn btn-outline-secondary"
+            class="btn btn-outline-secondary pill"
             type="button"
             @click="clearSearch"
             :disabled="!search.trim()"
@@ -151,7 +179,7 @@ onMounted(loadUsers)
       </div>
 
       <!-- Status -->
-      <div v-if="loading">Lade Nutzer …</div>
+      <div v-if="loading" class="alert alert-light border">Lade Nutzer …</div>
 
       <div v-else-if="error" class="alert alert-danger">
         {{ error }}
@@ -162,11 +190,11 @@ onMounted(loadUsers)
       </div>
 
       <!-- Liste -->
-      <ul v-else class="list-group">
+      <ul v-else class="list-group list-group-flush">
         <li
           v-for="u in users"
           :key="u.id"
-          class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2"
+          class="list-group-item py-3 d-flex justify-content-between align-items-start flex-wrap gap-2"
         >
           <!-- Anzeige -->
           <div v-if="editingId !== u.id" class="flex-grow-1">
@@ -178,13 +206,18 @@ onMounted(loadUsers)
           <div v-else class="flex-grow-1 w-100">
             <div class="row g-2">
               <div class="col-12 col-md-4">
-                <input v-model="editForm.name" class="form-control" type="text" placeholder="Name" />
+                <label class="form-label small text-muted fw-bold">Name</label>
+                <input v-model="editForm.name" class="form-control pill-input" type="text" />
               </div>
+
               <div class="col-12 col-md-5">
-                <input v-model="editForm.email" class="form-control" type="email" placeholder="E-Mail" />
+                <label class="form-label small text-muted fw-bold">E-Mail</label>
+                <input v-model="editForm.email" class="form-control pill-input" type="email" />
               </div>
+
               <div class="col-12 col-md-3">
-                <select v-model="editForm.role" class="form-select">
+                <label class="form-label small text-muted fw-bold">Rolle</label>
+                <select v-model="editForm.role" class="form-select pill-select">
                   <option value="ADMIN">ADMIN</option>
                   <option value="USER">USER</option>
                 </select>
@@ -197,7 +230,7 @@ onMounted(loadUsers)
           </div>
 
           <!-- Rechts: Rolle/Buttons -->
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2 ms-auto">
             <span
               v-if="editingId !== u.id"
               class="role-badge"
@@ -208,7 +241,7 @@ onMounted(loadUsers)
 
             <button
               v-if="editingId !== u.id"
-              class="btn btn-sm btn-outline-secondary"
+              class="btn btn-sm btn-outline-secondary pill"
               type="button"
               @click="startEdit(u)"
             >
@@ -217,7 +250,7 @@ onMounted(loadUsers)
 
             <template v-else>
               <button
-                class="btn btn-sm btn-outline-secondary"
+                class="btn btn-sm btn-outline-secondary pill"
                 type="button"
                 @click="cancelEdit"
                 :disabled="saveLoading"
@@ -225,12 +258,12 @@ onMounted(loadUsers)
                 Abbrechen
               </button>
               <button
-                class="btn btn-sm btn-success cooked-save"
+                class="btn btn-sm btn-success cooked-save pill"
                 type="button"
                 @click="saveUser(u.id)"
                 :disabled="saveLoading"
               >
-                Speichern
+                {{ saveLoading ? 'Speichert…' : 'Speichern' }}
               </button>
             </template>
           </div>
@@ -246,26 +279,44 @@ onMounted(loadUsers)
   border-radius: 30px;
 }
 
+/* Cooked Look */
+.pill {
+  border-radius: 999px;
+}
+.search-input {
+  border-radius: 999px;
+}
+.pill-input,
+.pill-select {
+  border-radius: 999px;
+  background: #f8f8f0;
+}
+
+/* Dropdown schöner: soft */
+.pill-select {
+  border: 1px solid rgba(107, 106, 25, 0.25);
+}
+
+/* Rolle */
 .role-badge {
   font-size: 0.75rem;
   padding: 6px 14px;
   border-radius: 999px;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
-
 .role-admin {
   background-color: #eef1e2;
   color: #4a4a1a;
   border: 1px solid #cfd4a6;
 }
-
 .role-user {
-  background-color: #f1f1f1;
+  background-color: #f2f2f2;
   color: #555;
   border: 1px solid #ddd;
 }
 
-/* Speichern-Button softer als Bootstrap-grün */
+/* Speichern-Button softer */
 .cooked-save {
   background-color: #6b6a19 !important;
   border-color: #6b6a19 !important;
