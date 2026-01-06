@@ -98,9 +98,9 @@ h1 {
 
 /* ===== SOFTER Cooked Button (Mail senden) ===== */
 .btn-success {
-  background-color: #a8ad63;   /* helles, softes Grün */
+  background-color: #81801f;   /* helles, softes Grün */
   border-color: #a8ad63;
-  color: #3f3f1f;              /* dunkles Oliv statt Weiß */
+  color: #ffffff;              /* dunkles Oliv statt Weiß */
   font-weight: 500;
   border-radius: 999px;        /* weich / modern */
 }
