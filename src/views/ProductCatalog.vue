@@ -181,7 +181,7 @@ watch(isAuthenticated, () => {
 <template>
   <SpecialBanner />
 
-  <main class="container">
+  <main id="recipes" class="container">
     <div class="text-center mb-4">
       <h2 class="display-6 fw-bold text-dark mb-3">
         Unsere Rezepte

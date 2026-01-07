@@ -40,10 +40,16 @@ const router = createRouter({
 
     { path: '/recipes', redirect: '/' },
     { path: '/home', redirect: '/' },
-    { path: '/about', name: 'about', component: About
-},
+    { path: '/about', name: 'about', component: About },
 
-  ]
+  ],
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth', top: 80 }
+    }
+    return { top: 0 }
+  }
 })
 
 export default router
