@@ -13,7 +13,8 @@
   Home
 </router-link>
           <a class="button" href="#">Kategorien</a>
-          <a class="button" href="#">Über uns</a>
+          <router-link to="/about" class="button" active-class="active">Über uns</router-link>
+
           
           <router-link to="/profile" class="button" active-class="active">
             Profil

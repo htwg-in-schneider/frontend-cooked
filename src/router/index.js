@@ -10,6 +10,8 @@ import Impressum from '../views/Impressum.vue'
 import Datenschutz from '../views/Datenschutz.vue'
 import AdminUsers from '../views/AdminUsers.vue'
 import AdminTransactions from '../views/AdminTransactions.vue'
+import About from '../views/About.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,7 +37,10 @@ const router = createRouter({
 
     // optional: falls jemand /home aufruft -> umleiten auf /
     { path: '/home', redirect: '/' },
-    { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions }
+    { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions },
+
+    { path: '/about', name: 'about', component: About }
+
 
   ]
 })
