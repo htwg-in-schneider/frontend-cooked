@@ -5,6 +5,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import ProductCard from '@/components/ProductCard.vue'
 import Button from '@/components/Button.vue'
 import { fetchFavorites, removeFavorite } from '@/services/favoritesService'
+import { getApiRoot } from '@/services/apiAuth'
 
 const router = useRouter()
 const { getAccessTokenSilently } = useAuth0()
@@ -19,8 +20,7 @@ async function loadFavorites() {
   error.value = ''
 
   try {
-    const baseUrl = import.meta.env.VITE_API_URL
-    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
 
     const data = await fetchFavorites(getAccessTokenSilently)
     const recipes = Array.isArray(data) ? data : []

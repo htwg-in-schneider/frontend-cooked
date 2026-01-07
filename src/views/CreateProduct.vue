@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
-import { authFetch } from '@/services/apiAuth'
+import { authFetch, getApiCollection, getApiRoot } from '@/services/apiAuth'
 
 const router = useRouter()
 const { getAccessTokenSilently } = useAuth0()
@@ -29,16 +29,29 @@ const errors = ref({
 })
 
 const categories = ref([]) // [{ value: "ASIAN", label: "Asiatisch" }, ...]
-const categoryQuery = ref('')
+const dropdownOpen = ref(false)
 
-const filteredCategories = computed(() => {
-  const q = categoryQuery.value.trim().toLowerCase()
-  if (!q) return categories.value
-  return categories.value.filter((c) => {
-    const hay = `${c.label} ${c.value}`.toLowerCase()
-    return hay.includes(q)
-  })
+const selectedCategoryLabels = computed(() => {
+  const selected = new Set(form.value.categories || [])
+  return categories.value
+    .filter((c) => selected.has(c.value))
+    .map((c) => c.label || c.value)
 })
+
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value
+}
+
+function closeDropdown() {
+  dropdownOpen.value = false
+}
+
+function onDocumentClick(event) {
+  const dropdown = event.target.closest('.category-dropdown')
+  if (!dropdown) {
+    closeDropdown()
+  }
+}
 
 function resetErrors() {
   errors.value = {
@@ -158,8 +171,7 @@ function removeStep(index) {
 async function loadCategories() {
   try {
     // VITE_API_URL ist bei euch z.B. http://localhost:8081/api/recipes
-    const baseUrl = import.meta.env.VITE_API_URL
-    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
 
     // Backend: /api/category/translation liefert z.B. { ASIAN: "Asiatisch", ... }
     const res = await fetch(`${apiRoot}/category/translation`)
@@ -188,7 +200,7 @@ async function createProduct() {
   try {
     errors.value.general = ''
 
-    const baseUrl = import.meta.env.VITE_API_URL
+    const baseUrl = getApiCollection()
     const ingredients = normalizeIngredients(form.value.ingredients)
     const steps = (form.value.steps || [])
       .map((s) => ({
@@ -227,7 +239,12 @@ async function createProduct() {
 }
 
 onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
   loadCategories()
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
 })
 </script>
 
@@ -259,24 +276,37 @@ onMounted(() => {
           <!-- Kategorie -->
           <div class="col-md-6">
             <label class="form-label text-muted small">Kategorien</label>
+            <div class="category-dropdown">
+              <button
+                class="form-control rounded-pill px-3 category-toggle"
+                type="button"
+                @click.stop="toggleDropdown"
+              >
+                <span v-if="selectedCategoryLabels.length">
+                  {{ selectedCategoryLabels.join(', ') }}
+                </span>
+                <span v-else>Kategorie auswählen</span>
+              </button>
 
-            <input
-              v-model="categoryQuery"
-              type="text"
-              class="form-control rounded-pill px-3 mb-2"
-              placeholder="Kategorie suchen"
-            />
-
-            <select v-model="form.categories" class="form-select rounded-4 px-3" multiple>
-              <option v-for="c in filteredCategories" :key="c.value" :value="c.value">
-                {{ c.label }} ({{ c.value }})
-              </option>
-            </select>
-            <div v-if="filteredCategories.length === 0" class="form-text small ps-2">
-              Keine Kategorien gefunden.
-            </div>
-            <div class="form-text small ps-2">
-              Mehrfachauswahl mit Strg/Cmd.
+              <div v-if="dropdownOpen" class="category-menu shadow-sm">
+                <div
+                  v-for="c in categories"
+                  :key="c.value"
+                  class="category-item"
+                >
+                  <label class="d-flex align-items-center gap-2 mb-0" @click.stop>
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      :value="c.value"
+                      v-model="form.categories"
+                      @click.stop
+                      @change.stop
+                    />
+                    <span>{{ c.label }} ({{ c.value }})</span>
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div v-if="errors.categories" class="text-danger small mt-1 ps-2">
@@ -439,5 +469,47 @@ select:focus {
   border-radius: 20px;
   padding: 16px;
   background: #fafaf3;
+}
+
+.category-dropdown {
+  position: relative;
+}
+
+.category-toggle {
+  text-align: left;
+  background: #f9f9f9;
+  border: 1px solid #eee;
+}
+
+.category-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 10px 12px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 5;
+}
+
+.category-item {
+  padding: 6px 4px;
+}
+
+.category-menu .form-check-input {
+  accent-color: #6b6a19;
+  border-color: #6b6a19;
+}
+
+.category-menu .form-check-input:checked {
+  background-color: #6b6a19 !important;
+  border-color: #6b6a19 !important;
+}
+
+.category-menu .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(107, 106, 25, 0.15);
 }
 </style>

@@ -5,7 +5,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
 import Button from '@/components/Button.vue'
-import { authFetch } from '@/services/apiAuth'
+import { authFetch, getApiCollection, getApiRoot } from '@/services/apiAuth'
 
 const route = useRoute()
 const router = useRouter()
@@ -88,8 +88,7 @@ function normalizeSteps(input) {
 
 async function loadCategories() {
   try {
-    const baseUrl = import.meta.env.VITE_API_URL
-    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
 
     const res = await fetch(`${apiRoot}/category/translation`)
     if (!res.ok) throw new Error()
@@ -133,7 +132,7 @@ onMounted(async () => {
       authStore.setMe(await loadMe(getAccessTokenSilently))
     }
     const id = route.params.id
-    const baseUrl = import.meta.env.VITE_API_URL
+    const baseUrl = getApiCollection()
     const res = await fetch(`${baseUrl}/${id}`)
 
     if (!res.ok) {
@@ -186,7 +185,7 @@ async function updateProduct() {
       alert('Keine Berechtigung.')
       return
     }
-    const baseUrl = import.meta.env.VITE_API_URL
+    const baseUrl = getApiCollection()
     const id = route.params.id
 
     const ingredients = normalizeIngredients(form.value.ingredients)
@@ -229,7 +228,7 @@ async function deleteProduct() {
   if (!confirm('Wirklich löschen?')) return
 
   try {
-    const baseUrl = import.meta.env.VITE_API_URL
+    const baseUrl = getApiCollection()
     const id = route.params.id
 
     const res = await authFetch(getAccessTokenSilently, `${baseUrl}/${id}`, {

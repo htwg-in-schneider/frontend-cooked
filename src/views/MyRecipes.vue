@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import ProductCard from '@/components/ProductCard.vue'
 import Button from '@/components/Button.vue'
-import { authFetch } from '@/services/apiAuth'
+import { authFetch, getApiCollection, getApiRoot } from '@/services/apiAuth'
 
 const router = useRouter()
 const { getAccessTokenSilently } = useAuth0()
@@ -18,8 +18,8 @@ async function loadMyRecipes() {
   error.value = ''
 
   try {
-    const baseUrl = import.meta.env.VITE_API_URL
-    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const baseUrl = getApiCollection()
+    const apiRoot = getApiRoot()
 
     const res = await authFetch(getAccessTokenSilently, `${baseUrl}/mine`)
     if (!res.ok) throw new Error('Fehler beim Laden')
