@@ -1,7 +1,21 @@
 <script setup>
+import { useRouter } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
 import { useBannerStore } from '@/stores/banner'
 
+const router = useRouter()
+const { isAuthenticated, loginWithRedirect } = useAuth0()
 const bannerStore = useBannerStore()
+
+async function handleCtaClick() {
+  if (isAuthenticated.value) {
+    router.push('/create')
+    return
+  }
+  await loginWithRedirect({
+    appState: { targetUrl: '/create' }
+  })
+}
 </script>
 
 <template>
@@ -28,7 +42,9 @@ const bannerStore = useBannerStore()
             die Kochen lieben und es gerne einfach halten.
           </p>
           
-          <a href="#" class="cta-float">Jetzt loskochen!</a>
+          <button class="cta-float" type="button" @click="handleCtaClick">
+            Jetzt Rezept erstellen!
+          </button>
         
         </div>
 
@@ -53,6 +69,8 @@ const bannerStore = useBannerStore()
   transition: transform 0.2s;
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
   margin-top: 10px;
+  border: none;
+  cursor: pointer;
 }
 
 .cta-float:hover {

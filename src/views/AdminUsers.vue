@@ -1,5 +1,9 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
+import { useAuth0 } from '@auth0/auth0-vue'
+import { authFetch } from '@/services/apiAuth'
+
+const { getAccessTokenSilently } = useAuth0()
 
 const users = ref([])
 const loading = ref(false)
@@ -44,7 +48,7 @@ async function loadUsers() {
       ? `${apiRoot}/users?search=${encodeURIComponent(q)}`
       : `${apiRoot}/users`
 
-    const res = await fetch(url)
+    const res = await authFetch(getAccessTokenSilently, url)
     if (!res.ok) throw new Error(await res.text())
 
     users.value = await res.json()
@@ -58,7 +62,6 @@ async function loadUsers() {
 }
 
 function clearSearch() {
-  // watch(search) triggert dann automatisch loadUsers()
   search.value = ''
 }
 
@@ -108,7 +111,7 @@ async function saveUser(id) {
   try {
     const apiRoot = getApiRoot()
 
-    const res = await fetch(`${apiRoot}/users/${id}`, {
+    const res = await authFetch(getAccessTokenSilently, `${apiRoot}/users/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -145,11 +148,14 @@ onMounted(loadUsers)
         class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3"
       >
         <div>
-          <h1 class="fw-bold mb-1">Admin – Nutzerverwaltung</h1>
+          <h1 class="fw-bold mb-1">Admin - Nutzerverwaltung</h1>
           <p class="text-muted mb-0">
             Admins können Nutzer sehen und bearbeiten (kein Anlegen nötig).
           </p>
         </div>
+        <router-link to="/profile" class="btn btn-outline-secondary pill">
+          Zurück zum Dashboard
+        </router-link>
       </div>
 
       <!-- Suche -->
@@ -159,7 +165,7 @@ onMounted(loadUsers)
             v-model="search"
             class="form-control search-input"
             type="text"
-            placeholder="Suchen (Name oder E-Mail)…"
+            placeholder="Suchen (Name oder E-Mail)."
           />
         </div>
 
@@ -179,7 +185,7 @@ onMounted(loadUsers)
       </div>
 
       <!-- Status -->
-      <div v-if="loading" class="alert alert-light border">Lade Nutzer …</div>
+      <div v-if="loading" class="alert alert-light border">Lade Nutzer...</div>
 
       <div v-else-if="error" class="alert alert-danger">
         {{ error }}
@@ -263,7 +269,7 @@ onMounted(loadUsers)
                 @click="saveUser(u.id)"
                 :disabled="saveLoading"
               >
-                {{ saveLoading ? 'Speichert…' : 'Speichern' }}
+                {{ saveLoading ? 'Speichert.' : 'Speichern' }}
               </button>
             </template>
           </div>
@@ -292,7 +298,7 @@ onMounted(loadUsers)
   background: #f8f8f0;
 }
 
-/* Dropdown schöner: soft */
+/* Dropdown softer */
 .pill-select {
   border: 1px solid rgba(107, 106, 25, 0.25);
 }

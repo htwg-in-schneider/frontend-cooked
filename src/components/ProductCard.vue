@@ -1,11 +1,33 @@
 <script setup>
+import { computed } from 'vue'
 import Button from './Button.vue'
 
-defineProps({
-  product: Object
+const props = defineProps({
+  product: Object,
+  isFavorite: Boolean,
+  canFavorite: Boolean
 })
 
-defineEmits(['show-details'])
+defineEmits(['show-details', 'toggle-favorite'])
+
+const stars = [1, 2, 3, 4, 5]
+
+function isStarActive(rating, value) {
+  if (!rating) return false
+  return rating >= value - 0.25
+}
+
+function formatRating(value) {
+  if (!value) return '0.0'
+  return Number(value).toFixed(1)
+}
+
+const categories = computed(() => {
+  const raw = props.product?.categories ?? props.product?.category ?? []
+  if (Array.isArray(raw)) return raw.filter(Boolean)
+  if (!raw) return []
+  return [raw]
+})
 </script>
 
 <template>
@@ -19,11 +41,46 @@ defineEmits(['show-details'])
       />
     </div>
     <div class="card-body pt-2 pb-5">
-      <div class="badge bg-light text-dark mb-2">{{ product.category }}</div>
+      <div class="category-row mb-2">
+        <div class="d-flex flex-wrap gap-2">
+          <span
+            v-for="cat in categories"
+            :key="cat"
+            class="badge bg-light text-dark"
+          >
+            {{ cat }}
+          </span>
+        </div>
+        <button
+          class="favorite-btn"
+          :class="{ active: isFavorite, disabled: !canFavorite }"
+          type="button"
+          :title="canFavorite ? 'Favorit' : 'Bitte einloggen'"
+          @click="$emit('toggle-favorite', product)"
+        >
+          &#9829;
+        </button>
+      </div>
       <h3 class="card-title h5">{{ product.title }}</h3>
       
       <div class="d-flex align-items-center gap-2 text-muted small mb-3">
-        <span>⏱ {{ product.time }}</span>
+        <span>Zeit: {{ product.time }}</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 mb-3 rating-row">
+        <div class="stars">
+          <span
+            v-for="s in stars"
+            :key="s"
+            class="star"
+            :class="{ active: isStarActive(product.ratingAvg, s) }"
+          >
+            &#9733;
+          </span>
+        </div>
+        <span class="text-muted small">
+          {{ product.ratingCount ? formatRating(product.ratingAvg) : 'Keine Bewertungen' }}
+        </span>
       </div>
 
       <Button
@@ -48,5 +105,58 @@ defineEmits(['show-details'])
 .cooked-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 1rem 3rem rgba(0,0,0,.175)!important;
+}
+
+.rating-row {
+  color: #6b6a19;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star {
+  color: #d3d3d3;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.star.active {
+  color: #6b6a19;
+}
+
+.favorite-btn {
+  border: 0;
+  background: #f4f4ef;
+  color: #b7b7b7;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 1.1rem;
+  line-height: 1;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.favorite-btn:hover {
+  transform: translateY(-1px);
+  color: #d66b6b;
+}
+
+.favorite-btn.active {
+  color: #e03a3a;
+  background: #ffe6e6;
+}
+
+.favorite-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.category-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 </style>

@@ -1,47 +1,86 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
+import { authFetch } from '@/services/apiAuth'
 
 const router = useRouter()
+const { getAccessTokenSilently } = useAuth0()
 
 const defaultImage = 'https://placehold.co/600x400?text=Neues+Rezept'
 
 const form = ref({
   title: '',
-  category: '',
+  categories: [],
   prepTimeMinutes: '',
   image: '',
-  instructions: ''
+  ingredients: [{ name: '', amount: '' }],
+  steps: [{ text: '' }]
 })
 
 const errors = ref({
   title: '',
-  category: '',
+  categories: '',
   prepTimeMinutes: '',
-  instructions: '',
+  ingredients: '',
+  steps: '',
   general: ''
 })
 
 const categories = ref([]) // [{ value: "ASIAN", label: "Asiatisch" }, ...]
+const categoryQuery = ref('')
+
+const filteredCategories = computed(() => {
+  const q = categoryQuery.value.trim().toLowerCase()
+  if (!q) return categories.value
+  return categories.value.filter((c) => {
+    const hay = `${c.label} ${c.value}`.toLowerCase()
+    return hay.includes(q)
+  })
+})
 
 function resetErrors() {
   errors.value = {
     title: '',
-    category: '',
+    categories: '',
     prepTimeMinutes: '',
-    instructions: '',
+    ingredients: '',
+    steps: '',
     general: ''
   }
+}
+
+function normalizeIngredients(list) {
+  return (list || [])
+    .map((i) => ({
+      name: (i?.name || '').trim(),
+      amount: (i?.amount || '').trim()
+    }))
+    .filter((i) => i.name || i.amount)
+}
+
+function buildDescription(steps) {
+  return steps.map((s) => s.text).filter(Boolean).join('\n')
+}
+
+function validateIngredients(list) {
+  for (const i of list || []) {
+    const name = (i?.name || '').trim()
+    const amount = (i?.amount || '').trim()
+    if (!name && amount) {
+      return 'Bitte gib einen Namen zur Mengenangabe an.'
+    }
+  }
+  return ''
 }
 
 function validate() {
   resetErrors()
 
   const title = form.value.title.trim()
-  const category = form.value.category.trim()
+  const categories = Array.isArray(form.value.categories) ? form.value.categories : []
   const minutes = Number(form.value.prepTimeMinutes)
-  const instructions = form.value.instructions.trim()
 
   let ok = true
 
@@ -53,8 +92,8 @@ function validate() {
     ok = false
   }
 
-  if (!category) {
-    errors.value.category = 'Bitte wähle eine Kategorie aus.'
+  if (categories.length === 0) {
+    errors.value.categories = 'Bitte wähle mindestens eine Kategorie aus.'
     ok = false
   }
 
@@ -69,15 +108,51 @@ function validate() {
     ok = false
   }
 
-  if (!instructions) {
-    errors.value.instructions = 'Bitte gib eine Zubereitung an.'
+  const ingredientError = validateIngredients(form.value.ingredients)
+  if (ingredientError) {
+    errors.value.ingredients = ingredientError
     ok = false
-  } else if (instructions.length < 10) {
-    errors.value.instructions = 'Die Zubereitung sollte mindestens 10 Zeichen haben.'
+  }
+
+  const normalizedIngredients = normalizeIngredients(form.value.ingredients)
+  if (normalizedIngredients.length === 0) {
+    errors.value.ingredients = 'Bitte gib mindestens eine Zutat an.'
+    ok = false
+  }
+
+  let hasStepText = false
+  for (const step of form.value.steps) {
+    const text = (step?.text || '').trim()
+    if (text) {
+      hasStepText = true
+    }
+  }
+  if (!hasStepText) {
+    errors.value.steps = 'Bitte gib mindestens einen Zubereitungsschritt an.'
     ok = false
   }
 
   return ok
+}
+
+function addIngredient() {
+  form.value.ingredients.push({ name: '', amount: '' })
+}
+
+function removeIngredient(index) {
+  if (form.value.ingredients.length > 1) {
+    form.value.ingredients.splice(index, 1)
+  }
+}
+
+function addStep() {
+  form.value.steps.push({ text: '' })
+}
+
+function removeStep(index) {
+  if (form.value.steps.length > 1) {
+    form.value.steps.splice(index, 1)
+  }
 }
 
 async function loadCategories() {
@@ -114,17 +189,26 @@ async function createProduct() {
     errors.value.general = ''
 
     const baseUrl = import.meta.env.VITE_API_URL
+    const ingredients = normalizeIngredients(form.value.ingredients)
+    const steps = (form.value.steps || [])
+      .map((s) => ({
+        text: (s?.text || '').trim()
+      }))
+      .filter((s) => s.text)
+    const description = buildDescription(steps)
 
     const payload = {
       title: form.value.title.trim(),
-      category: form.value.category.trim(),
+      categories: (form.value.categories || []).filter(Boolean),
       prepTimeMinutes: Number(form.value.prepTimeMinutes),
       imageUrl: form.value.image.trim(),
-      // bei euch heißt es im Backend "description" (wird als Anleitung genutzt)
-      description: form.value.instructions.trim()
+      description,
+      instructions: description,
+      ingredients,
+      steps
     }
 
-    const res = await fetch(`${baseUrl}`, {
+    const res = await authFetch(getAccessTokenSilently, `${baseUrl}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -174,18 +258,29 @@ onMounted(() => {
         <div class="row g-3 mb-3">
           <!-- Kategorie -->
           <div class="col-md-6">
-            <label class="form-label text-muted small">Kategorie</label>
+            <label class="form-label text-muted small">Kategorien</label>
 
-            <!-- Dropdown statt freiem Text -->
-            <select v-model="form.category" class="form-select rounded-pill px-3">
-              <option value="" disabled>Bitte wählen…</option>
-              <option v-for="c in categories" :key="c.value" :value="c.value">
+            <input
+              v-model="categoryQuery"
+              type="text"
+              class="form-control rounded-pill px-3 mb-2"
+              placeholder="Kategorie suchen"
+            />
+
+            <select v-model="form.categories" class="form-select rounded-4 px-3" multiple>
+              <option v-for="c in filteredCategories" :key="c.value" :value="c.value">
                 {{ c.label }} ({{ c.value }})
               </option>
             </select>
+            <div v-if="filteredCategories.length === 0" class="form-text small ps-2">
+              Keine Kategorien gefunden.
+            </div>
+            <div class="form-text small ps-2">
+              Mehrfachauswahl mit Strg/Cmd.
+            </div>
 
-            <div v-if="errors.category" class="text-danger small mt-1 ps-2">
-              {{ errors.category }}
+            <div v-if="errors.categories" class="text-danger small mt-1 ps-2">
+              {{ errors.categories }}
             </div>
           </div>
 
@@ -229,18 +324,81 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Anleitung -->
+        <!-- Zutaten -->
         <div class="mb-4">
-          <label class="form-label text-muted small">Zubereitung</label>
-          <textarea
-            v-model="form.instructions"
-            class="form-control rounded-4 p-3"
-            rows="5"
-            placeholder="Schritt für Schritt…"
-          ></textarea>
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label text-muted small mb-0">Zutaten</label>
+            <button class="btn btn-outline-secondary btn-sm" type="button" @click="addIngredient">
+              + Zutat
+            </button>
+          </div>
 
-          <div v-if="errors.instructions" class="text-danger small mt-1 ps-2">
-            {{ errors.instructions }}
+          <div v-for="(ing, idx) in form.ingredients" :key="idx" class="row g-2 mb-2">
+            <div class="col-7">
+              <input
+                v-model="ing.name"
+                type="text"
+                class="form-control rounded-pill px-3"
+                placeholder="Zutat"
+              />
+            </div>
+            <div class="col-4">
+              <input
+                v-model="ing.amount"
+                type="text"
+                class="form-control rounded-pill px-3"
+                placeholder="Menge"
+              />
+            </div>
+            <div class="col-1 d-flex align-items-center justify-content-end">
+              <button
+                class="btn btn-outline-secondary btn-sm"
+                type="button"
+                @click="removeIngredient(idx)"
+                :disabled="form.ingredients.length === 1"
+              >
+                -
+              </button>
+            </div>
+          </div>
+
+          <div v-if="errors.ingredients" class="text-danger small mt-1 ps-2">
+            {{ errors.ingredients }}
+          </div>
+        </div>
+
+        <!-- Schritte -->
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label text-muted small mb-0">Zubereitungsschritte</label>
+            <button class="btn btn-outline-secondary btn-sm" type="button" @click="addStep">
+              + Schritt
+            </button>
+          </div>
+
+          <div v-for="(step, stepIndex) in form.steps" :key="stepIndex" class="step-card mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div class="fw-semibold">Schritt {{ stepIndex + 1 }}</div>
+              <button
+                class="btn btn-outline-secondary btn-sm"
+                type="button"
+                @click="removeStep(stepIndex)"
+                :disabled="form.steps.length === 1"
+              >
+                Entfernen
+              </button>
+            </div>
+
+            <textarea
+              v-model="step.text"
+              class="form-control rounded-4 p-3 mb-3"
+              rows="3"
+              placeholder="Beschreibe den Schritt."
+            ></textarea>
+          </div>
+
+          <div v-if="errors.steps" class="text-danger small mt-1 ps-2">
+            {{ errors.steps }}
           </div>
         </div>
 
@@ -257,7 +415,7 @@ onMounted(() => {
 
 <style scoped>
 .form-card {
-  max-width: 700px;
+  max-width: 800px;
   border-radius: 40px;
 }
 
@@ -274,5 +432,12 @@ select:focus {
   background-color: white;
   border-color: #81801f;
   box-shadow: none;
+}
+
+.step-card {
+  border: 1px solid #eee;
+  border-radius: 20px;
+  padding: 16px;
+  background: #fafaf3;
 }
 </style>
