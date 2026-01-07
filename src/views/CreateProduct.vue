@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
@@ -12,7 +12,7 @@ const defaultImage = 'https://placehold.co/600x400?text=Neues+Rezept'
 
 const form = ref({
   title: '',
-  category: '',
+  categories: [],
   prepTimeMinutes: '',
   image: '',
   ingredients: [{ name: '', amount: '' }],
@@ -21,7 +21,7 @@ const form = ref({
 
 const errors = ref({
   title: '',
-  category: '',
+  categories: '',
   prepTimeMinutes: '',
   ingredients: '',
   steps: '',
@@ -29,11 +29,21 @@ const errors = ref({
 })
 
 const categories = ref([]) // [{ value: "ASIAN", label: "Asiatisch" }, ...]
+const categoryQuery = ref('')
+
+const filteredCategories = computed(() => {
+  const q = categoryQuery.value.trim().toLowerCase()
+  if (!q) return categories.value
+  return categories.value.filter((c) => {
+    const hay = `${c.label} ${c.value}`.toLowerCase()
+    return hay.includes(q)
+  })
+})
 
 function resetErrors() {
   errors.value = {
     title: '',
-    category: '',
+    categories: '',
     prepTimeMinutes: '',
     ingredients: '',
     steps: '',
@@ -69,7 +79,7 @@ function validate() {
   resetErrors()
 
   const title = form.value.title.trim()
-  const category = form.value.category.trim()
+  const categories = Array.isArray(form.value.categories) ? form.value.categories : []
   const minutes = Number(form.value.prepTimeMinutes)
 
   let ok = true
@@ -82,8 +92,8 @@ function validate() {
     ok = false
   }
 
-  if (!category) {
-    errors.value.category = 'Bitte wähle eine Kategorie aus.'
+  if (categories.length === 0) {
+    errors.value.categories = 'Bitte wähle mindestens eine Kategorie aus.'
     ok = false
   }
 
@@ -189,7 +199,7 @@ async function createProduct() {
 
     const payload = {
       title: form.value.title.trim(),
-      category: form.value.category.trim(),
+      categories: (form.value.categories || []).filter(Boolean),
       prepTimeMinutes: Number(form.value.prepTimeMinutes),
       imageUrl: form.value.image.trim(),
       description,
@@ -248,18 +258,29 @@ onMounted(() => {
         <div class="row g-3 mb-3">
           <!-- Kategorie -->
           <div class="col-md-6">
-            <label class="form-label text-muted small">Kategorie</label>
+            <label class="form-label text-muted small">Kategorien</label>
 
-            <!-- Dropdown statt freiem Text -->
-            <select v-model="form.category" class="form-select rounded-pill px-3">
-      <option value="" disabled>Bitte wählen.</option>
-              <option v-for="c in categories" :key="c.value" :value="c.value">
+            <input
+              v-model="categoryQuery"
+              type="text"
+              class="form-control rounded-pill px-3 mb-2"
+              placeholder="Kategorie suchen"
+            />
+
+            <select v-model="form.categories" class="form-select rounded-4 px-3" multiple>
+              <option v-for="c in filteredCategories" :key="c.value" :value="c.value">
                 {{ c.label }} ({{ c.value }})
               </option>
             </select>
+            <div v-if="filteredCategories.length === 0" class="form-text small ps-2">
+              Keine Kategorien gefunden.
+            </div>
+            <div class="form-text small ps-2">
+              Mehrfachauswahl mit Strg/Cmd.
+            </div>
 
-            <div v-if="errors.category" class="text-danger small mt-1 ps-2">
-              {{ errors.category }}
+            <div v-if="errors.categories" class="text-danger small mt-1 ps-2">
+              {{ errors.categories }}
             </div>
           </div>
 
@@ -289,7 +310,7 @@ onMounted(() => {
             placeholder="https://..."
           />
           <div class="form-text small ps-3 mb-3">
-            Lasse es leer fuer ein Standardbild.
+            Lasse es leer für ein Standardbild.
           </div>
 
           <div v-if="form.image" class="text-center">

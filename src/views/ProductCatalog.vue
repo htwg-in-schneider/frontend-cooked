@@ -1,16 +1,20 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
 import SpecialBanner from '@/components/SpecialBanner.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import ProductFilter from '@/components/ProductFilter.vue'
 import Button from '@/components/Button.vue'
+import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
 
 const router = useRouter()
+const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
 const products = ref([])
 const loading = ref(true)
 const error = ref(null)
 const activeSort = ref('published')
+const favoriteIds = ref(new Set())
 
 // Die Haupt-Funktion zum Laden der Produkte
 async function fetchProducts(filters = {}) {
@@ -31,9 +35,7 @@ async function fetchProducts(filters = {}) {
     if (filters.name) {
       url.searchParams.append('name', filters.name)
     }
-    if (filters.category) {
-      url.searchParams.append('category', filters.category)
-    }
+    const selectedCategories = Array.isArray(filters.categories) ? filters.categories : []
 
     // 3. Daten abrufen
     const res = await fetch(url.toString())
@@ -61,10 +63,16 @@ async function fetchProducts(filters = {}) {
           // ignore rating errors
         }
 
+        const categories = Array.isArray(recipe.categories)
+          ? recipe.categories
+          : recipe.category
+            ? [recipe.category]
+            : []
+
         return {
           id: recipe.id,
           title: recipe.title,
-          category: recipe.category,
+          categories,
           time: recipe.prepTimeMinutes + ' min',
           durationMinutes: Number(recipe.prepTimeMinutes) || 0,
           image: recipe.imageUrl,
@@ -75,7 +83,14 @@ async function fetchProducts(filters = {}) {
       })
     )
 
-    products.value = sortProducts(enriched, activeSort.value)
+    const filtered = selectedCategories.length
+      ? enriched.filter((item) => {
+          const cats = Array.isArray(item.categories) ? item.categories : []
+          return cats.some((c) => selectedCategories.includes(c))
+        })
+      : enriched
+
+    products.value = sortProducts(filtered, activeSort.value)
 
   } catch (e) {
     error.value = e.message
@@ -88,6 +103,7 @@ async function fetchProducts(filters = {}) {
 // Initial laden
 onMounted(() => {
   fetchProducts()
+  loadFavorites()
 })
 
 // Filter-Änderungen behandeln
@@ -125,6 +141,41 @@ function sortProducts(list, sortBy) {
 function goToDetail(product) {
   router.push({ name: 'product-detail', params: { id: product.id } })
 }
+
+async function loadFavorites() {
+  if (!isAuthenticated.value) {
+    favoriteIds.value = new Set()
+    return
+  }
+  try {
+    const ids = await fetchFavoriteIds(getAccessTokenSilently)
+    favoriteIds.value = new Set(ids)
+  } catch {
+    favoriteIds.value = new Set()
+  }
+}
+
+async function toggleFavorite(product) {
+  if (!product?.id) return
+  if (!isAuthenticated.value) {
+    await loginWithRedirect({ appState: { target: router.currentRoute.value.fullPath } })
+    return
+  }
+
+  const isFav = favoriteIds.value.has(product.id)
+  try {
+    const ids = isFav
+      ? await removeFavorite(getAccessTokenSilently, product.id)
+      : await addFavorite(getAccessTokenSilently, product.id)
+    favoriteIds.value = new Set(ids)
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+watch(isAuthenticated, () => {
+  loadFavorites()
+})
 </script>
 
 <template>
@@ -170,8 +221,11 @@ function goToDetail(product) {
           :key="product.id"
         >
           <ProductCard 
-            :product="product" 
-            @show-details="goToDetail" 
+            :product="product"
+            :is-favorite="favoriteIds.has(product.id)"
+            :can-favorite="isAuthenticated"
+            @show-details="goToDetail"
+            @toggle-favorite="toggleFavorite"
           />
         </div>
       </div>

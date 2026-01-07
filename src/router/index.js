@@ -5,6 +5,8 @@ import ProductDetail from '../views/ProductDetail.vue'
 import CreateProduct from '../views/CreateProduct.vue'
 import EditProduct from '../views/EditProduct.vue'
 import UserProfile from '../views/UserProfile.vue'
+import MyRecipes from '../views/MyRecipes.vue'
+import Favorites from '../views/Favorites.vue'
 import Kontakt from '../views/Kontakt.vue'
 import Impressum from '../views/Impressum.vue'
 import Datenschutz from '../views/Datenschutz.vue'
@@ -20,6 +22,8 @@ const router = createRouter({
 
     { path: '/product/:id', name: 'product-detail', component: ProductDetail },
     { path: '/create', name: 'create-product', component: CreateProduct, meta: { requiresAuth: true } },
+    { path: '/my-recipes', name: 'my-recipes', component: MyRecipes, meta: { requiresAuth: true } },
+    { path: '/favorites', name: 'favorites', component: Favorites, meta: { requiresAuth: true } },
     { path: '/edit/:id', name: 'edit-product', component: EditProduct, meta: { requiresAuth: true } },
 
     // Profile muss Login erzwingen

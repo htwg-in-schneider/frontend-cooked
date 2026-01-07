@@ -1,18 +1,23 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
 import ProductReviews from '@/components/ProductReviews.vue'
 import { authFetch } from '@/services/apiAuth'
+import { useAuthStore } from '@/stores/authStore'
+import { loadMe } from '@/services/meService'
+import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
 
 const route = useRoute()
 const router = useRouter()
-const { getAccessTokenSilently } = useAuth0()
+const { user, getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0()
+const authStore = useAuthStore()
 
 const product = ref(null)
 const loading = ref(true)
 const error = ref(null)
+const isFavorite = ref(false)
 
 const deleting = ref(false)
 const deleteError = ref('')
@@ -30,6 +35,10 @@ async function loadProduct() {
   error.value = null
 
   try {
+    if (isAuthenticated.value && !authStore.role) {
+      authStore.setMe(await loadMe(getAccessTokenSilently))
+    }
+
     const id = route.params.id
     const res = await fetch(`${import.meta.env.VITE_API_URL}/${id}`)
     if (!res.ok) throw new Error('Rezept nicht gefunden')
@@ -40,17 +49,24 @@ async function loadProduct() {
       ? data.steps
       : descriptionToSteps(data.description)
     const ingredients = Array.isArray(data.ingredients) ? data.ingredients : []
+    const categories = Array.isArray(data.categories)
+      ? data.categories
+      : data.category
+        ? [data.category]
+        : []
 
     product.value = {
       id: data.id,
       title: data.title,
-      category: data.category,
+      categories,
       time: data.prepTimeMinutes + ' min',
       image: data.imageUrl,
       description: data.description,
       ingredients,
-      steps
+      steps,
+      createdByEmail: data.createdByEmail || ''
     }
+    await loadFavoriteStatus()
   } catch (e) {
     error.value = e.message
   } finally {
@@ -89,6 +105,50 @@ async function deleteRecipe() {
 }
 
 onMounted(loadProduct)
+
+watch(isAuthenticated, () => {
+  loadFavoriteStatus()
+})
+
+async function loadFavoriteStatus() {
+  if (!isAuthenticated.value || !product.value?.id) {
+    isFavorite.value = false
+    return
+  }
+  try {
+    const ids = await fetchFavoriteIds(getAccessTokenSilently)
+    isFavorite.value = ids.includes(product.value.id)
+  } catch {
+    isFavorite.value = false
+  }
+}
+
+async function toggleFavorite() {
+  if (!product.value?.id) return
+  if (!isAuthenticated.value) {
+    await loginWithRedirect({ appState: { target: router.currentRoute.value.fullPath } })
+    return
+  }
+  try {
+    if (isFavorite.value) {
+      await removeFavorite(getAccessTokenSilently, product.value.id)
+      isFavorite.value = false
+    } else {
+      await addFavorite(getAccessTokenSilently, product.value.id)
+      isFavorite.value = true
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const canManage = computed(() => {
+  if (!isAuthenticated.value) return false
+  if (authStore.role === 'ADMIN') return true
+  const email = user.value?.email
+  const createdBy = product.value?.createdByEmail
+  return !!email && !!createdBy && createdBy.toLowerCase() === email.toLowerCase()
+})
 </script>
 
 <template>
@@ -107,6 +167,21 @@ onMounted(loadProduct)
 
     <!-- Inhalt -->
     <div v-else-if="product" class="detail-card bg-white p-4 shadow-sm mx-auto">
+      <div class="detail-actions">
+        <router-link to="/" class="text-decoration-none">
+          <Button variant="secondary" class="btn-sm">Zurück zur Übersicht</Button>
+        </router-link>
+        <button
+          class="favorite-fab"
+          :class="{ active: isFavorite, disabled: !isAuthenticated }"
+          type="button"
+          title="Favorit"
+          @click="toggleFavorite"
+        >
+          &#9829;
+        </button>
+      </div>
+
       <div class="row g-4">
         <div class="col-md-6">
           <img
@@ -130,8 +205,14 @@ onMounted(loadProduct)
 
         <div class="col-md-6 d-flex flex-column">
           <div>
-            <div class="badge bg-light text-dark mb-2 px-3 py-2 rounded-pill border">
-              {{ product.category }}
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <span
+                v-for="cat in product.categories"
+                :key="cat"
+                class="badge bg-light text-dark px-3 py-2 rounded-pill border"
+              >
+                {{ cat }}
+              </span>
             </div>
 
             <h1 class="fw-bold mb-2 text-dark">{{ product.title }}</h1>
@@ -157,11 +238,7 @@ onMounted(loadProduct)
           </div>
 
           <div class="mt-auto">
-            <router-link to="/" class="text-decoration-none">
-              <Button variant="accent">Zurück zur Übersicht</Button>
-            </router-link>
-
-            <div class="mt-4 pt-4 border-top">
+<div v-if="canManage" class="mt-4 pt-4 border-top">
               <p class="text-muted small mb-2">Rezept verwalten</p>
 
               <div class="d-flex flex-column gap-2">
@@ -200,6 +277,7 @@ onMounted(loadProduct)
 .detail-card {
   border-radius: 30px;
   max-width: 1100px;
+  position: relative;
 }
 
 .detail-image {
@@ -253,5 +331,42 @@ onMounted(loadProduct)
 .delete-soft-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.detail-actions {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 2;
+}
+
+.favorite-fab {
+  border: 0;
+  background: #f4f4ef;
+  color: #b7b7b7;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.favorite-fab:hover {
+  transform: translateY(-1px);
+  color: #d66b6b;
+}
+
+.favorite-fab.active {
+  color: #e03a3a;
+  background: #ffe6e6;
+}
+
+.favorite-fab.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 </style>

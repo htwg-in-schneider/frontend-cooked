@@ -1,23 +1,59 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
+import { useAuthStore } from '@/stores/authStore'
+import { loadMe } from '@/services/meService'
 import Button from '@/components/Button.vue'
 import { authFetch } from '@/services/apiAuth'
 
 const route = useRoute()
 const router = useRouter()
-const { getAccessTokenSilently } = useAuth0()
+const { user, isAuthenticated, getAccessTokenSilently } = useAuth0()
+const authStore = useAuthStore()
 
 const form = ref({
   title: '',
-  category: '',
+  categories: [],
   prepTimeMinutes: '',
   image: '',
   ingredients: [{ name: '', amount: '' }],
   steps: [{ text: '' }]
 })
 
+const categories = ref([])
+const dropdownOpen = ref(false)
+const canManage = ref(false)
+
+const selectedCategoryLabels = computed(() => {
+  const selected = new Set(form.value.categories || [])
+  return categories.value
+    .filter((c) => selected.has(c.value))
+    .map((c) => c.label || c.value)
+})
+
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value
+}
+
+function closeDropdown() {
+  dropdownOpen.value = false
+}
+
+function onDocumentClick(event) {
+  const dropdown = event.target.closest('.category-dropdown')
+  if (!dropdown) {
+    closeDropdown()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocumentClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
+})
 const loading = ref(true)
 const error = ref(null)
 
@@ -50,6 +86,25 @@ function normalizeSteps(input) {
   return steps.length ? steps : [{ text: '' }]
 }
 
+async function loadCategories() {
+  try {
+    const baseUrl = import.meta.env.VITE_API_URL
+    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+
+    const res = await fetch(`${apiRoot}/category/translation`)
+    if (!res.ok) throw new Error()
+
+    const data = await res.json()
+    categories.value = Object.entries(data).map(([value, label]) => ({ value, label }))
+  } catch {
+    categories.value = [
+      { value: 'ASIAN', label: 'Asiatisch' },
+      { value: 'ITALIAN', label: 'Italienisch' },
+      { value: 'VEGETARIAN', label: 'Vegetarisch' }
+    ]
+  }
+}
+
 function addIngredient() {
   form.value.ingredients.push({ name: '', amount: '' })
 }
@@ -73,6 +128,10 @@ function removeStep(index) {
 // Produktdaten beim Start laden
 onMounted(async () => {
   try {
+    await loadCategories()
+    if (isAuthenticated.value && !authStore.role) {
+      authStore.setMe(await loadMe(getAccessTokenSilently))
+    }
     const id = route.params.id
     const baseUrl = import.meta.env.VITE_API_URL
     const res = await fetch(`${baseUrl}/${id}`)
@@ -90,9 +149,23 @@ onMounted(async () => {
       Array.isArray(data.steps) && data.steps.length ? data.steps : descriptionToSteps(data.description)
     )
 
+    const productCategories = Array.isArray(data.categories)
+      ? data.categories
+      : data.category
+        ? [data.category]
+        : []
+
+    const creator = (data.createdByEmail || '').toLowerCase()
+    const email = (user.value?.email || '').toLowerCase()
+    const isAdmin = authStore.role === 'ADMIN'
+    canManage.value = isAdmin || (!!creator && !!email && creator === email)
+    if (!canManage.value) {
+      throw new Error('Keine Berechtigung zum Bearbeiten dieses Rezepts.')
+    }
+
     form.value = {
       title: data.title,
-      category: data.category,
+      categories: productCategories,
       prepTimeMinutes: data.prepTimeMinutes,
       image: data.imageUrl,
       ingredients,
@@ -109,6 +182,10 @@ onMounted(async () => {
 // UPDATE (Speichern)
 async function updateProduct() {
   try {
+    if (!canManage.value) {
+      alert('Keine Berechtigung.')
+      return
+    }
     const baseUrl = import.meta.env.VITE_API_URL
     const id = route.params.id
 
@@ -125,7 +202,7 @@ async function updateProduct() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title: form.value.title,
-        category: form.value.category,
+        categories: (form.value.categories || []).filter(Boolean),
         prepTimeMinutes: form.value.prepTimeMinutes,
         imageUrl: form.value.image,
         description,
@@ -196,13 +273,39 @@ async function deleteProduct() {
 
         <div class="row g-3 mb-3">
           <div class="col-md-6">
-            <label class="form-label text-muted small">Kategorie</label>
-            <input
-              v-model="form.category"
-              type="text"
-              class="form-control rounded-pill px-3"
-              placeholder="z.B. ITALIAN, ASIAN..."
-            />
+            <label class="form-label text-muted small">Kategorien</label>
+            <div class="category-dropdown">
+              <button
+                class="form-control rounded-pill px-3 category-toggle"
+                type="button"
+                @click.stop="toggleDropdown"
+              >
+                <span v-if="selectedCategoryLabels.length">
+                  {{ selectedCategoryLabels.join(', ') }}
+                </span>
+                <span v-else>Kategorie auswählen</span>
+              </button>
+
+              <div v-if="dropdownOpen" class="category-menu shadow-sm">
+                <div
+                  v-for="c in categories"
+                  :key="c.value"
+                  class="category-item"
+                >
+                  <label class="d-flex align-items-center gap-2 mb-0" @click.stop>
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      :value="c.value"
+                      v-model="form.categories"
+                      @click.stop
+                      @change.stop
+                    />
+                    <span>{{ c.label }} ({{ c.value }})</span>
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="col-md-6">
             <label class="form-label text-muted small">Zeit (Minuten)</label>
@@ -337,5 +440,47 @@ textarea:focus {
   border-radius: 20px;
   padding: 16px;
   background: #fafaf3;
+}
+
+.category-dropdown {
+  position: relative;
+}
+
+.category-toggle {
+  text-align: left;
+  background: #f9f9f9;
+  border: 1px solid #eee;
+}
+
+.category-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 10px 12px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 5;
+}
+
+.category-item {
+  padding: 6px 4px;
+}
+
+.category-menu .form-check-input {
+  accent-color: #6b6a19;
+  border-color: #6b6a19;
+}
+
+.category-menu .form-check-input:checked {
+  background-color: #6b6a19 !important;
+  border-color: #6b6a19 !important;
+}
+
+.category-menu .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(107, 106, 25, 0.15);
 }
 </style>

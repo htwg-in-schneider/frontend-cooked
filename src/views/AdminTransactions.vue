@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import { authFetch } from '@/services/apiAuth'
 
 const { getAccessTokenSilently } = useAuth0()
+
 const transactions = ref([])
 const loading = ref(false)
 const error = ref('')
@@ -99,12 +100,17 @@ onMounted(loadTransactions)
   <div class="container py-5">
     <div class="bg-white shadow-sm p-4 p-md-5 mx-auto admin-card">
       <!-- Kopfzeile -->
-      <div class="d-flex align-items-center justify-content-between gap-3 mb-4">
+      <div class="d-flex align-items-center justify-content-between gap-3 mb-4 flex-wrap">
         <h1 class="fw-bold mb-0">Aktivitätsprotokoll</h1>
 
-        <button class="btn btn-outline-secondary" type="button" @click="loadTransactions">
-          Neu laden
-        </button>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-secondary" type="button" @click="loadTransactions">
+            Neu laden
+          </button>
+          <router-link to="/profile" class="btn btn-outline-secondary">
+            Zurück zum Dashboard
+          </router-link>
+        </div>
       </div>
 
       <!-- Suche -->
@@ -114,7 +120,7 @@ onMounted(loadTransactions)
             v-model="search"
             class="form-control"
             type="text"
-            placeholder="Suchen…"
+            placeholder="Suchen."
             @input="loadTransactions"
           />
         </div>
@@ -135,7 +141,7 @@ onMounted(loadTransactions)
       </div>
 
       <!-- States -->
-      <div v-if="loading" class="text-muted">Lade …</div>
+      <div v-if="loading" class="text-muted">Lade...</div>
 
       <div v-else-if="error" class="alert alert-danger mb-0">
         {{ error }}
@@ -176,7 +182,7 @@ onMounted(loadTransactions)
 
                 <td class="fw-semibold">{{ userLabel(t) }}</td>
 
-                <td class="muted">{{ t.details || '—' }}</td>
+                <td class="muted">{{ t.details || '-' }}</td>
               </tr>
             </tbody>
           </table>

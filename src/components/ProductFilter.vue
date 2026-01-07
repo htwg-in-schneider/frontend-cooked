@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import Button from './Button.vue'
 import { useBannerStore } from '@/stores/banner'
 
@@ -10,13 +10,73 @@ const emit = defineEmits(['filter-change'])
 
 // Such-/Filterwerte
 const searchQuery = ref('')
-const selectedCategory = ref('')
+const selectedCategories = ref([])
+const dropdownOpen = ref(false)
+const categoryQuery = ref('')
 const selectedSort = ref('published_desc')
+const sortDropdownOpen = ref(false)
+
+const sortOptions = [
+  { value: 'published_desc', label: 'Neueste' },
+  { value: 'published_asc', label: 'Älteste' },
+  { value: 'duration_asc', label: 'Dauer kurz' },
+  { value: 'duration_desc', label: 'Dauer lang' },
+  { value: 'rating_desc', label: 'Bewertung hoch' },
+  { value: 'rating_asc', label: 'Bewertung niedrig' }
+]
+
+const selectedSortLabel = computed(() => {
+  const match = sortOptions.find((o) => o.value === selectedSort.value)
+  return match ? match.label : 'Sortieren'
+})
 
 // Kategorien, normalisiert auf { code, label }
 const categories = ref([])
+const filteredCategories = computed(() => {
+  const q = categoryQuery.value.trim().toLowerCase()
+  if (!q) return categories.value
+  return categories.value.filter((c) => {
+    const hay = `${c.label} ${c.code}`.toLowerCase()
+    return hay.includes(q)
+  })
+})
+
+const selectedCategoryLabels = computed(() => {
+  const selected = new Set(selectedCategories.value || [])
+  return categories.value
+    .filter((c) => selected.has(c.code))
+    .map((c) => c.label || c.code)
+})
+
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value
+}
+
+function closeDropdown() {
+  dropdownOpen.value = false
+}
+
+function toggleSortDropdown() {
+  sortDropdownOpen.value = !sortDropdownOpen.value
+}
+
+function closeSortDropdown() {
+  sortDropdownOpen.value = false
+}
+
+function onDocumentClick(event) {
+  const categoryDrop = event.target.closest('.category-dropdown')
+  const sortDrop = event.target.closest('.sort-dropdown')
+  if (!categoryDrop) {
+    closeDropdown()
+  }
+  if (!sortDrop) {
+    closeSortDropdown()
+  }
+}
 
 onMounted(async () => {
+  document.addEventListener('click', onDocumentClick)
   try {
     // VITE_API_URL zeigt auf die Produkt-Collection, z.B.
     //  - http://localhost:8081/api/product
@@ -62,20 +122,32 @@ onMounted(async () => {
   }
 })
 
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocumentClick)
+})
+
 // Filter nach außen geben
 function emitFilters() {
   emit('filter-change', {
     name: searchQuery.value,
-    category: selectedCategory.value,
+    categories: selectedCategories.value,
     sortBy: selectedSort.value
   })
+}
+
+function selectSort(value) {
+  selectedSort.value = value
+  emitFilters()
+  closeSortDropdown()
 }
 
 // Reset-Button
 function resetFilter() {
   searchQuery.value = ''
-  selectedCategory.value = ''
+  selectedCategories.value = []
+  categoryQuery.value = ''
   selectedSort.value = 'published_desc'
+  sortDropdownOpen.value = false
   emitFilters()
 }
 </script>
@@ -97,44 +169,79 @@ function resetFilter() {
           placeholder="z.B. Pasta..."
         >
       </div>
-
       <!-- Kategorie -->
       <div class="col-md-3">
         <label class="form-label small text-muted fw-bold">Kategorie</label>
-        <select
-          v-model="selectedCategory"
-          @change="emitFilters"
-          class="form-select rounded-pill px-3 bg-light border-0 filter-input"
-        >
-          <option value="">Alle Kategorien</option>
-          <option
-            v-for="tag in categories"
-            :key="tag.code"
-            :value="tag.code"
+        <div class="category-dropdown">
+          <button
+            class="form-control rounded-pill px-3 bg-light border-0 filter-input category-toggle"
+            type="button"
+            @click.stop="toggleDropdown"
           >
-            {{ tag.label }}
-          </option>
-        </select>
+            <span v-if="selectedCategoryLabels.length">
+              {{ selectedCategoryLabels.join(', ') }}
+            </span>
+            <span v-else>Kategorie auswählen</span>
+          </button>
+
+          <div v-if="dropdownOpen" class="category-menu shadow-sm">
+            <input
+              v-model="categoryQuery"
+              type="text"
+              class="form-control rounded-pill px-3 mb-2"
+              placeholder="Kategorie suchen"
+              @input="emitFilters"
+            />
+
+            <div
+              v-for="tag in filteredCategories"
+              :key="tag.code"
+              class="category-item"
+            >
+              <label class="d-flex align-items-center gap-2 mb-0">
+                <input
+                  v-model="selectedCategories"
+                  type="checkbox"
+                  class="form-check-input"
+                  :value="tag.code"
+                  @change="emitFilters"
+                />
+                <span>{{ tag.label }}</span>
+              </label>
+            </div>
+
+            <div v-if="filteredCategories.length === 0" class="form-text small ps-2">
+              Keine Kategorien gefunden.
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Sortieren -->
+            <!-- Sortieren -->
       <div class="col-md-3">
         <label class="form-label small text-muted fw-bold">Sortieren</label>
-        <select
-          v-model="selectedSort"
-          @change="emitFilters"
-          class="form-select rounded-pill px-3 bg-light border-0 filter-input"
-        >
-          <option value="published_desc">Neueste</option>
-          <option value="published_asc">Älteste</option>
-          <option value="duration_asc">Dauer kurz</option>
-          <option value="duration_desc">Dauer lang</option>
-          <option value="rating_desc">Bewertung hoch</option>
-          <option value="rating_asc">Bewertung niedrig</option>
-        </select>
-      </div>
+        <div class="sort-dropdown">
+          <button
+            class="form-control rounded-pill px-3 bg-light border-0 filter-input sort-toggle"
+            type="button"
+            @click.stop="toggleSortDropdown"
+          >
+            {{ selectedSortLabel }}
+          </button>
 
-      <!-- Reset Button -->
+          <div v-if="sortDropdownOpen" class="sort-menu shadow-sm">
+            <button
+              v-for="opt in sortOptions"
+              :key="opt.value"
+              type="button"
+              class="sort-item"
+              @click="selectSort(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
+      </div>      <!-- Reset Button -->
       <div class="col-md-2">
         <Button
           variant="secondary"
@@ -177,5 +284,81 @@ function resetFilter() {
 
 .mt-150 {
   margin-top: 120px !important;
+}
+
+.category-dropdown {
+  position: relative;
+}
+
+.category-toggle {
+  text-align: left;
+}
+
+.category-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 10px 12px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 5;
+}
+
+.category-item {
+  padding: 6px 4px;
+}
+
+.category-menu .form-check-input {
+  accent-color: #6b6a19;
+  border-color: #6b6a19;
+}
+
+.category-menu .form-check-input:checked {
+  background-color: #6b6a19 !important;
+  border-color: #6b6a19 !important;
+}
+
+.category-menu .form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(107, 106, 25, 0.15);
+}
+
+.sort-dropdown {
+  position: relative;
+}
+
+.sort-toggle {
+  text-align: left;
+}
+
+.sort-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 5;
+}
+
+.sort-item {
+  border: 0;
+  background: #f6f6ef;
+  color: #333;
+  border-radius: 999px;
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.sort-item:hover {
+  background: #edeedc;
 }
 </style>
