@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
+import { getApiRoot } from '@/services/apiAuth'
 
 const props = defineProps({
   productId: {
@@ -27,8 +28,7 @@ const submitSuccess = ref('')
 async function fetchReviews() {
   loading.value = true
   try {
-    const baseUrl = import.meta.env.VITE_API_URL
-    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
 
     const res = await fetch(`${apiRoot}/review/product/${props.productId}`)
 
@@ -76,8 +76,7 @@ async function submitReview() {
   submitLoading.value = true
 
   try {
-    const baseUrl = import.meta.env.VITE_API_URL
-    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
 
     const payload = {
       userName: userName.value.trim(),

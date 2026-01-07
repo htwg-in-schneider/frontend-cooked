@@ -7,6 +7,7 @@ import ProductCard from '@/components/ProductCard.vue'
 import ProductFilter from '@/components/ProductFilter.vue'
 import Button from '@/components/Button.vue'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
+import { getApiCollection, getApiRoot } from '@/services/apiAuth'
 
 const router = useRouter()
 const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
@@ -26,7 +27,7 @@ async function fetchProducts(filters = {}) {
   
   try {
     // 1. Basis-URL aus der .env Datei laden (z.B. http://localhost:8081/api/product)
-    const baseUrl = import.meta.env.VITE_API_URL
+    const baseUrl = getApiCollection()
     
     // Wir nutzen URLSearchParams, um die URL sauber zusammenzubauen
     const url = new URL(baseUrl)
@@ -43,7 +44,7 @@ async function fetchProducts(filters = {}) {
     
     const data = await res.json()
 
-    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
     const recipes = Array.isArray(data) ? data : []
 
     const enriched = await Promise.all(
@@ -86,7 +87,7 @@ async function fetchProducts(filters = {}) {
     const filtered = selectedCategories.length
       ? enriched.filter((item) => {
           const cats = Array.isArray(item.categories) ? item.categories : []
-          return cats.some((c) => selectedCategories.includes(c))
+          return selectedCategories.every((c) => cats.includes(c))
         })
       : enriched
 
@@ -194,12 +195,11 @@ watch(isAuthenticated, () => {
       </router-link>
     </div>
 
-    <div :class="{ 'mt-huge': !false }">
+    <div class="mt-huge">
       <ProductFilter @filter-change="handleFilterChange" />
     </div>
 
     <section class="py-4">
-      
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
       </div>

@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
 import ProductReviews from '@/components/ProductReviews.vue'
-import { authFetch } from '@/services/apiAuth'
+import { authFetch, getApiCollection } from '@/services/apiAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
@@ -40,7 +40,7 @@ async function loadProduct() {
     }
 
     const id = route.params.id
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/${id}`)
+    const res = await fetch(`${getApiCollection()}/${id}`)
     if (!res.ok) throw new Error('Rezept nicht gefunden')
 
     const data = await res.json()
@@ -89,7 +89,7 @@ async function deleteRecipe() {
   try {
     const res = await authFetch(
       getAccessTokenSilently,
-      `${import.meta.env.VITE_API_URL}/${product.value.id}`,
+      `${getApiCollection()}/${product.value.id}`,
       { method: 'DELETE' }
     )
 

@@ -1,5 +1,9 @@
+export function getApiCollection() {
+  return (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+}
+
 export function getApiRoot() {
-  const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+  const base = getApiCollection()
   return base.replace(/\/(product|products|recipe|recipes)$/i, '')
 }
 

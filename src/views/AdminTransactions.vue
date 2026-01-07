@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
-import { authFetch } from '@/services/apiAuth'
+import { authFetch, getApiRoot } from '@/services/apiAuth'
 
 const { getAccessTokenSilently } = useAuth0()
 
@@ -55,8 +55,7 @@ async function loadTransactions() {
   error.value = ''
 
   try {
-    const baseUrl = import.meta.env.VITE_API_URL
-    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
 
     const res = await authFetch(getAccessTokenSilently, `${apiRoot}/transactions`)
     if (!res.ok) throw new Error(await res.text())

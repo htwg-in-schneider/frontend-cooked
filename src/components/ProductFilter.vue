@@ -2,6 +2,7 @@
 import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import Button from './Button.vue'
 import { useBannerStore } from '@/stores/banner'
+import { getApiRoot } from '@/services/apiAuth'
 
 const bannerStore = useBannerStore()
 
@@ -78,13 +79,7 @@ function onDocumentClick(event) {
 onMounted(async () => {
   document.addEventListener('click', onDocumentClick)
   try {
-    // VITE_API_URL zeigt auf die Produkt-Collection, z.B.
-    //  - http://localhost:8081/api/product
-    //  - http://localhost:8081/api/recipes
-    const productBase = import.meta.env.VITE_API_URL
-
-    // "/api/product" oder "/api/recipes" abschneiden -> "/api"
-    const apiRoot = productBase.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
 
     const res = await fetch(`${apiRoot}/category`)
 

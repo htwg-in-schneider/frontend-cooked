@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
-import { authFetch } from '@/services/apiAuth'
+import { authFetch, getApiRoot } from '@/services/apiAuth'
 
 const { getAccessTokenSilently } = useAuth0()
 
@@ -15,14 +15,6 @@ const editingId = ref(null)
 const editForm = ref({ name: '', email: '', role: 'USER' })
 const saveLoading = ref(false)
 const saveError = ref('')
-
-// ---- API Root (aus VITE_API_URL ableiten) ----
-function getApiRoot() {
-  // Beispiel: VITE_API_URL = http://localhost:8081/api/recipes
-  // => apiRoot = http://localhost:8081/api
-  const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
-  return base.replace(/\/(product|products|recipe|recipes)$/i, '')
-}
 
 // ---- Debounce: Suche nicht bei jedem Buchstaben sofort ----
 let searchTimer = null

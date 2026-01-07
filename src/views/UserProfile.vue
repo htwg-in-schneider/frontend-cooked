@@ -4,7 +4,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import { useAuthStore } from '@/stores/authStore'
 import Button from '@/components/Button.vue'
 import { loadMe } from '@/services/meService'
-import { authFetch } from '@/services/apiAuth'
+import { authFetch, getApiRoot } from '@/services/apiAuth'
 
 const { user, isAuthenticated, getAccessTokenSilently, logout } = useAuth0()
 const authStore = useAuthStore()
@@ -70,8 +70,7 @@ async function saveProfile() {
   error.value = ''
 
   try {
-    const baseUrl = import.meta.env.VITE_API_URL
-    const apiRoot = baseUrl.replace(/\/(product|products|recipes)$/, '')
+    const apiRoot = getApiRoot()
 
     const res = await authFetch(getAccessTokenSilently, `${apiRoot}/me`, {
       method: 'PUT',
