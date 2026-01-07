@@ -39,7 +39,10 @@ const router = createRouter({
     { path: '/admin/transactions', name: 'admin-transactions', component: AdminTransactions, meta: { requiresAuth: true, requiresAdmin: true } },
 
     { path: '/recipes', redirect: '/' },
-    { path: '/home', redirect: '/' }
+    { path: '/home', redirect: '/' },
+    { path: '/about', name: 'about', component: About
+},
+
   ]
 })
 

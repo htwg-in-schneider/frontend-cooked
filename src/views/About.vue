@@ -1,237 +1,193 @@
 <script setup>
 import melinaImg from '@/assets/ÜberUnsBilder/melina.jpg'
-const lucasImg = 'https://placehold.co/600x800?text=Lucas'
+import lucasImg from '@/assets/ÜberUnsBilder/lucas.jpg'
 </script>
 
 <template>
-  <div class="about-bg">
-    <div class="container py-5">
+  <div class="container py-5">
+    <section class="about-card mx-auto">
 
-      <!-- Überschrift wie „Seitenkopf“ -->
-      <div class="page-head text-center mb-5">
-        <h1 class="page-title mb-2">Über uns</h1>
-        <p class="page-sub mb-0">
-          Wir sind Lucas & Melina – und Cooked ist unser digitales Kochbuch.
+      <!-- Kopf -->
+      <header class="about-head text-center">
+        <h1 class="about-title mb-2">Über uns</h1>
+        <p class="about-sub mb-0">
+          Wir sind Lucas und Melina und haben Cooked im Rahmen unseres Studiums entwickelt.
         </p>
-      </div>
+      </header>
 
-      <!-- „Projekt-Card“ wie Rezeptkarte (weiß, rund, Schatten) -->
-      <section class="info-card mx-auto mb-5">
-        <h4 class="fw-bold mb-3">Warum Cooked?</h4>
-        <p class="mb-2">
-          Cooked ist im Rahmen unseres Studiums der Wirtschaftsinformatik an der HTWG Konstanz entstanden.
-          Wir wollten etwas bauen, das man wirklich gerne benutzt: übersichtlich, modern und alltagstauglich.
-        </p>
-        <p class="mb-0">
-          Mit Cooked kannst du Rezepte sammeln, neue Ideen entdecken und deine Lieblingsgerichte schnell wiederfinden –
-          ohne Zettelchaos und ohne komplizierte Menüs.
-        </p>
+      <div class="divider"></div>
 
-        <!-- kleine „Meta“-Zeile wie bei Rezepten (ruhig, optional) -->
-        <div class="meta-row mt-4">
-          <span class="meta-pill">HTWG Konstanz</span>
-          <span class="meta-pill">Web-Tech Projekt</span>
-          <span class="meta-pill">Vue + Spring Boot</span>
+      <!-- Warum Cooked -->
+      <section class="about-section">
+        <h2 class="section-title">Warum Cooked?</h2>
+        <p class="about-p">
+          Die Idee zu Cooked ist während unseres Studiums der Wirtschaftsinformatik an der HTWG Konstanz entstanden.
+          Rezepte waren bei uns oft an vielen verschiedenen Orten gespeichert und dadurch schnell unübersichtlich.
+        </p>
+        <p class="about-p mb-0">
+          Cooked soll dabei helfen, Rezepte einfach zu sammeln, übersichtlich zu organisieren
+          und im Alltag schnell wiederzufinden.
+        </p>
+      </section>
+
+      <div class="divider"></div>
+
+      <!-- Wer wir sind -->
+      <section class="about-section">
+        <h2 class="section-title text-center mb-5">Wer wir sind</h2>
+
+        <div class="row g-5">
+          <!-- Melina -->
+          <div class="col-12 col-lg-6">
+            <div class="person">
+              <div class="img-frame">
+                <img :src="melinaImg" alt="Melina Maier" />
+              </div>
+
+              <div class="person-text">
+                <h3 class="person-name">Melina Maier</h3>
+                <p class="person-sub">Wirtschaftsinformatik · HTWG Konstanz</p>
+                <p class="person-desc">
+                  Ich koche gerne und probiere regelmäßig neue Gerichte aus.
+                  Cooked hilft mir dabei, Rezepte übersichtlich zu sammeln und langfristig zu organisieren.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lucas -->
+          <div class="col-12 col-lg-6">
+            <div class="person">
+              <div class="img-frame">
+                <img :src="lucasImg" alt="Lucas Grießer" />
+              </div>
+
+              <div class="person-text">
+                <h3 class="person-name">Lucas Grießer</h3>
+                <p class="person-sub">Wirtschaftsinformatik · HTWG Konstanz</p>
+                <p class="person-desc">
+                  Mich interessiert am Kochen vor allem der kreative Teil.
+                  Cooked ist für mich ein Werkzeug, um Rezepte strukturiert festzuhalten
+                  und jederzeit griffbereit zu haben.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      <!-- Team Cards im Rezept-Stil -->
-      <div class="row g-4 justify-content-center">
-        <!-- Melina -->
-        <div class="col-12 col-md-6 col-lg-4">
-          <article class="recipe-card-like h-100">
-            <div class="img-wrap">
-              <img :src="melinaImg" alt="Melina Maier" class="card-img" />
-            </div>
-
-            <div class="card-body-like">
-              <div class="category-like">TEAM</div>
-              <h3 class="card-title-like">Melina Maier</h3>
-
-              <div class="time-like">
-                <span class="dot"></span>
-                Wirtschaftsinformatik · HTWG Konstanz
-              </div>
-
-              <p class="card-text-like">
-                Ich koche leidenschaftlich gerne und probiere regelmäßig neue Rezepte aus.
-                Cooked ist für mich der Ort, um Rezepte übersichtlich zu sammeln und langfristig zu organisieren.
-              </p>
-
-              <!-- Button wie bei Rezepten -->
-              <button class="btn-olive w-100" type="button" disabled>
-                Profil
-              </button>
-            </div>
-          </article>
-        </div>
-
-        <!-- Lucas -->
-        <div class="col-12 col-md-6 col-lg-4">
-          <article class="recipe-card-like h-100">
-            <div class="img-wrap">
-              <img :src="lucasImg" alt="Lucas Grießer" class="card-img" />
-            </div>
-
-            <div class="card-body-like">
-              <div class="category-like">TEAM</div>
-              <h3 class="card-title-like">Lucas Grießer</h3>
-
-              <div class="time-like">
-                <span class="dot"></span>
-                Wirtschaftsinformatik · HTWG Konstanz
-              </div>
-
-              <p class="card-text-like">
-                Kochen bedeutet für mich Entspannung und Kreativität.
-                Cooked ist entstanden, um Rezepte strukturiert zu sammeln und jederzeit darauf zugreifen zu können.
-              </p>
-
-              <button class="btn-olive w-100" type="button" disabled>
-                Profil
-              </button>
-            </div>
-          </article>
-        </div>
-      </div>
-
-    </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-/* Hintergrund wie bei euren Rezeptseiten (oliv/butter) */
-.about-bg {
-  background: #b7b57a; /* ähnlicher Ton wie Screenshot */
-  min-height: 100%;
+/* Schrift */
+.about-card,
+.about-card * {
+  font-family: "Comfortaa", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* Weißer Hauptkasten */
+.about-card {
+  max-width: 1120px;
+  background: #ffffff;
+  border-radius: 30px; /* groß → sanfte Rundung */
+  padding: 44px 48px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.15);
 }
 
 /* Kopf */
-.page-title {
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.page-sub {
-  color: rgba(0, 0, 0, 0.55);
-}
-
-/* Weißer Infokasten im Card-Look */
-.info-card {
-  max-width: 980px;
-  background: #fff;
-  border-radius: 26px;
-  padding: 2.4rem 2.2rem;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
-}
-
-/* kleine Pills (wie Kategorien) */
-.meta-row {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.meta-pill {
-  font-size: 0.85rem;
-  font-weight: 700;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.05);
-}
-
-/* -------------------------
-   Team-Cards im Rezeptstil
-   ------------------------- */
-.recipe-card-like {
-  background: #fff;
-  border-radius: 26px;
-  overflow: hidden;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
-}
-
-/* Bildbereich wie Rezeptkarte */
-.img-wrap {
-  padding: 18px;
-  padding-bottom: 0;
-}
-
-.card-img {
-  width: 100%;
-  height: 270px;
-  border-radius: 18px;
-  object-fit: contain;        /* GANZE Person */
-  background: #f3f3f3;
-  padding: 10px;
-  display: block;
-}
-
-/* Body wie bei Rezeptkarten */
-.card-body-like {
-  padding: 18px 18px 22px 18px;
-}
-
-.category-like {
-  font-size: 0.85rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  color: rgba(0, 0, 0, 0.55);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-}
-
-.card-title-like {
-  font-size: 1.35rem;
-  font-weight: 800;
-  margin: 0 0 10px 0;
-}
-
-.time-like {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: rgba(0, 0, 0, 0.55);
+.about-title {
   font-weight: 600;
-  font-size: 0.95rem;
-  margin-bottom: 12px;
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
+.about-sub {
+  color: rgba(0, 0, 0, 0.6);
 }
 
-.card-text-like {
-  color: rgba(0, 0, 0, 0.70);
-  line-height: 1.55;
+/* Divider */
+.divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.12);
+  margin: 32px 0;
+}
+
+/* Text */
+.section-title {
+  font-weight: 600;
+  margin-bottom: 18px;
+}
+
+.about-p {
+  color: rgba(0, 0, 0, 0.75);
+  line-height: 1.7;
+}
+
+/* Person */
+.person {
+  display: flex;
+  gap: 26px;
+  align-items: flex-start;
+}
+
+/* ✅ Bild-Frame mit ruhiger Rundung */
+.img-frame {
+  width: 160px;
+  height: 210px;
+  border-radius: 17px;   /* OPTISCH passend zum großen Kasten */
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+/* Bild */
+.img-frame img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+
+  border-radius: inherit;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  transform: translateZ(0);
+}
+
+/* Person Text */
+.person-name {
+  font-weight: 600;
+  font-size: 1.55rem;
+  margin-bottom: 10px;
+}
+
+.person-sub {
+  color: rgba(0, 0, 0, 0.45);
   margin-bottom: 16px;
+  font-weight: 600;
 }
 
-/* Button wie euer Olive-Button */
-.btn-olive {
-  background: #7c7a2d;        /* olive wie Screenshot */
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  padding: 12px 16px;
-  font-weight: 800;
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.10);
+.person-desc {
+  color: rgba(0, 0, 0, 0.72);
+  line-height: 1.75;
 }
 
-.btn-olive:disabled {
-  opacity: 1;                 /* bleibt „echt“, obwohl disabled */
-  cursor: default;
-}
-
+/* Responsive */
 @media (max-width: 768px) {
-  .info-card {
-    padding: 1.8rem 1.4rem;
-    border-radius: 22px;
+  .about-card {
+    padding: 30px 20px;
+    border-radius: 24px;
   }
-  .card-img {
-    height: 240px;
+
+  .person {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .img-frame {
+    width: 140px;
+    height: 190px;
+    border-radius: 18px;
   }
 }
 </style>
