@@ -433,7 +433,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="d-flex gap-2">
-          <router-link to="/profile">
+          <router-link to="/">
             <Button variant="secondary" type="button">Abbrechen</Button>
           </router-link>
           <Button variant="accent" type="submit">Rezept speichern</Button>
