@@ -12,7 +12,8 @@
           <router-link to="/" class="button" exact-active-class="active">
   Home
 </router-link>
-          <a class="button" href="#">Kategorien</a>
+          <router-link :to="{ path: '/', hash: '#recipes' }" class="button"> Kategorien </router-link>
+
           <router-link to="/about" class="button" active-class="active">Über uns</router-link>
 
           
