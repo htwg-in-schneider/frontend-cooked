@@ -15,6 +15,7 @@ const saving = ref(false)
 const editMode = ref(false)
 
 const nameInput = ref('')
+const emailInput = ref('')
 const avatarInput = ref('')
 
 const isAdmin = computed(() => authStore.role === 'ADMIN')
@@ -45,6 +46,7 @@ onMounted(async () => {
   }
 
   nameInput.value = authStore.me?.name || user.value?.name || ''
+  emailInput.value = authStore.me?.email || user.value?.email || ''
   avatarInput.value = authStore.me?.avatarUrl || user.value?.picture || ''
 })
 
@@ -56,6 +58,7 @@ function doLogout() {
 function startEdit() {
   editMode.value = true
   nameInput.value = authStore.me?.name || user.value?.name || ''
+  emailInput.value = authStore.me?.email || user.value?.email || ''
   avatarInput.value = authStore.me?.avatarUrl || user.value?.picture || ''
 }
 
@@ -77,6 +80,7 @@ async function saveProfile() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: nameInput.value.trim(),
+        email: emailInput.value.trim(),
         avatarUrl: avatarInput.value.trim()
       })
     })
@@ -140,6 +144,10 @@ async function saveProfile() {
           <div class="col-md-6">
             <label class="form-label small text-muted">Name</label>
             <input v-model="nameInput" class="form-control rounded-pill px-3" type="text" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small text-muted">E-Mail</label>
+            <input v-model="emailInput" class="form-control rounded-pill px-3" type="email" />
           </div>
           <div class="col-md-6">
             <label class="form-label small text-muted">Profilbild URL</label>
