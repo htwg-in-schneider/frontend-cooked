@@ -19,6 +19,26 @@ const error = ref(null)
 const activeSort = ref('published')
 const favoriteIds = ref(new Set())
 
+const cuisineCodes = new Set([
+  'ITALIAN',
+  'FRENCH',
+  'ASIAN',
+  'AMERICAN',
+  'GERMAN',
+  'MEDITERRANEAN',
+  'MEXICAN',
+  'INDIAN',
+  'MIDDLE_EASTERN',
+  'THAI',
+  'CHINESE',
+  'JAPANESE',
+  'SPANISH'
+])
+
+function isCuisine(code) {
+  return cuisineCodes.has(code)
+}
+
 // Die Haupt-Funktion zum Laden der Produkte
 async function fetchProducts(filters = {}) {
   loading.value = true
@@ -89,10 +109,17 @@ async function fetchProducts(filters = {}) {
       })
     )
 
-    const filtered = selectedCategories.length
+    const selectedCuisine = selectedCategories.filter(isCuisine)
+    const selectedTags = selectedCategories.filter((c) => !isCuisine(c))
+    const hasCuisine = selectedCuisine.length > 0
+    const hasTags = selectedTags.length > 0
+
+    const filtered = hasCuisine || hasTags
       ? enriched.filter((item) => {
           const cats = Array.isArray(item.categoryCodes) ? item.categoryCodes : []
-          return selectedCategories.every((c) => cats.includes(c))
+          const cuisineMatch = !hasCuisine || selectedCuisine.some((c) => cats.includes(c))
+          const tagMatch = !hasTags || selectedTags.some((c) => cats.includes(c))
+          return cuisineMatch && tagMatch
         })
       : enriched
 

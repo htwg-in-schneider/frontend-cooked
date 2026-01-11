@@ -15,6 +15,8 @@ const editingId = ref(null)
 const editForm = ref({ name: '', email: '', role: 'USER' })
 const saveLoading = ref(false)
 const saveError = ref('')
+const deleteLoading = ref(false)
+const deleteError = ref('')
 
 // ---- Debounce: Suche nicht bei jedem Buchstaben sofort ----
 let searchTimer = null
@@ -71,6 +73,27 @@ function cancelEdit() {
   editingId.value = null
   editForm.value = { name: '', email: '', role: 'USER' }
   saveError.value = ''
+}
+
+async function deleteUser(id) {
+  if (!confirm('Diesen Nutzer wirklich loeschen?')) return
+  deleteLoading.value = true
+  deleteError.value = ''
+  try {
+    const apiRoot = getApiRoot()
+    const res = await authFetch(getAccessTokenSilently, `${apiRoot}/users/${id}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok && res.status !== 204) {
+      throw new Error(await res.text())
+    }
+    users.value = users.value.filter(u => u.id !== id)
+  } catch (e) {
+    console.error(e)
+    deleteError.value = e?.message || 'Loeschen fehlgeschlagen'
+  } finally {
+    deleteLoading.value = false
+  }
 }
 
 function validateForm() {
@@ -186,6 +209,9 @@ onMounted(loadUsers)
       <div v-else-if="users.length === 0" class="alert alert-light border">
         Keine Nutzer gefunden.
       </div>
+      <div v-if="deleteError" class="alert alert-danger mt-2">
+        {{ deleteError }}
+      </div>
 
       <!-- Liste -->
       <ul v-else class="list-group list-group-flush">
@@ -244,6 +270,15 @@ onMounted(loadUsers)
               @click="startEdit(u)"
             >
               Bearbeiten
+            </button>
+            <button
+              v-if="editingId !== u.id"
+              class="btn btn-sm btn-outline-danger pill"
+              type="button"
+              @click="deleteUser(u.id)"
+              :disabled="deleteLoading"
+            >
+              Loeschen
             </button>
 
             <template v-else>
