@@ -1,55 +1,191 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
 import ProductReviews from '@/components/ProductReviews.vue'
+import { authFetch, getApiCollection } from '@/services/apiAuth'
+import { useAuthStore } from '@/stores/authStore'
+import { loadMe } from '@/services/meService'
+import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
+import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 
 const route = useRoute()
+const router = useRouter()
+const { user, getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0()
+const authStore = useAuthStore()
+
 const product = ref(null)
 const loading = ref(true)
 const error = ref(null)
+const isFavorite = ref(false)
 
-onMounted(async () => {
+const deleting = ref(false)
+const deleteError = ref('')
+
+function descriptionToSteps(description) {
+  return (description || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((text) => ({ text, ingredients: [] }))
+}
+
+async function loadProduct() {
+  loading.value = true
+  error.value = null
+
   try {
-    const id = route.params.id
+    if (isAuthenticated.value && !authStore.role) {
+      authStore.setMe(await loadMe(getAccessTokenSilently))
+    }
 
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/${id}`)
+    const id = route.params.id
+    const res = await fetch(`${getApiCollection()}/${id}`)
     if (!res.ok) throw new Error('Rezept nicht gefunden')
+
     const data = await res.json()
+
+    const steps = Array.isArray(data.steps) && data.steps.length
+      ? data.steps
+      : descriptionToSteps(data.description)
+    const ingredients = Array.isArray(data.ingredients) ? data.ingredients : []
+    const categoryCodes = Array.isArray(data.categories)
+      ? data.categories
+      : data.category
+        ? [data.category]
+        : []
+
+    const categoryMap = await loadCategoryMap()
 
     product.value = {
       id: data.id,
       title: data.title,
-      category: data.category,
+      categories: mapCategoryLabels(categoryCodes, categoryMap),
+      categoryCodes,
       time: data.prepTimeMinutes + ' min',
       image: data.imageUrl,
-      description: data.description
+      description: data.description,
+      ingredients,
+      steps,
+      createdByEmail: data.createdByEmail || ''
     }
+    await loadFavoriteStatus()
   } catch (e) {
     error.value = e.message
   } finally {
     loading.value = false
   }
+}
+
+async function deleteRecipe() {
+  if (!product.value?.id) return
+
+  deleteError.value = ''
+
+  const ok = confirm(
+    `Möchtest du das Rezept "${product.value.title}" wirklich entfernen?\nDiese Aktion kann nicht rückgängig gemacht werden.`
+  )
+  if (!ok) return
+
+  deleting.value = true
+
+  try {
+    const res = await authFetch(
+      getAccessTokenSilently,
+      `${getApiCollection()}/${product.value.id}`,
+      { method: 'DELETE' }
+    )
+
+    if (!res.ok) throw new Error(await res.text())
+
+    router.push('/')
+  } catch (e) {
+    console.error(e)
+    deleteError.value = 'Rezept konnte nicht entfernt werden.'
+  } finally {
+    deleting.value = false
+  }
+}
+
+onMounted(loadProduct)
+
+watch(isAuthenticated, () => {
+  loadFavoriteStatus()
+})
+
+async function loadFavoriteStatus() {
+  if (!isAuthenticated.value || !product.value?.id) {
+    isFavorite.value = false
+    return
+  }
+  try {
+    const ids = await fetchFavoriteIds(getAccessTokenSilently)
+    isFavorite.value = ids.includes(product.value.id)
+  } catch {
+    isFavorite.value = false
+  }
+}
+
+async function toggleFavorite() {
+  if (!product.value?.id) return
+  if (!isAuthenticated.value) {
+    await loginWithRedirect({ appState: { target: router.currentRoute.value.fullPath } })
+    return
+  }
+  try {
+    if (isFavorite.value) {
+      await removeFavorite(getAccessTokenSilently, product.value.id)
+      isFavorite.value = false
+    } else {
+      await addFavorite(getAccessTokenSilently, product.value.id)
+      isFavorite.value = true
+    }
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+const canManage = computed(() => {
+  if (!isAuthenticated.value) return false
+  if (authStore.role === 'ADMIN') return true
+  const email = user.value?.email
+  const createdBy = product.value?.createdByEmail
+  return !!email && !!createdBy && createdBy.toLowerCase() === email.toLowerCase()
 })
 </script>
 
 <template>
   <div class="container py-5">
-
     <!-- Laden -->
     <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status"></div>
+      <div class="spinner-border text-primary"></div>
     </div>
 
     <!-- Fehler -->
     <div v-else-if="error" class="text-center py-5 text-white">
-      <h2>Oje! 😕</h2>
+      <h2>Oje!</h2>
       <p>{{ error }}</p>
       <router-link to="/" class="text-white">Zurück zur Übersicht</router-link>
     </div>
 
     <!-- Inhalt -->
     <div v-else-if="product" class="detail-card bg-white p-4 shadow-sm mx-auto">
+      <div class="detail-actions">
+        <router-link to="/" class="text-decoration-none">
+          <Button variant="secondary" class="btn-sm">Zurück zur Übersicht</Button>
+        </router-link>
+        <button
+          class="favorite-fab"
+          :class="{ active: isFavorite, disabled: !isAuthenticated }"
+          type="button"
+          title="Favorit"
+          @click="toggleFavorite"
+        >
+          &#9829;
+        </button>
+      </div>
+
       <div class="row g-4">
         <div class="col-md-6">
           <img
@@ -57,36 +193,80 @@ onMounted(async () => {
             :alt="product.title"
             class="img-fluid w-100 detail-image shadow-sm"
           />
+
+          <div class="mt-4">
+            <h5 class="mb-3">Zutaten</h5>
+            <ul v-if="product.ingredients && product.ingredients.length" class="ingredient-list">
+              <li v-for="(ing, idx) in product.ingredients" :key="idx">
+                <span v-if="ing.amount" class="fw-semibold">{{ ing.amount }}</span>
+                <span v-if="ing.amount"> </span>
+                <span>{{ ing.name }}</span>
+              </li>
+            </ul>
+            <p v-else class="text-muted small mb-0">Keine Zutaten angegeben.</p>
+          </div>
         </div>
 
         <div class="col-md-6 d-flex flex-column">
           <div>
-            <div class="badge bg-light text-dark mb-2 px-3 py-2 rounded-pill border">
-              {{ product.category }}
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <span
+                v-for="cat in product.categories"
+                :key="cat"
+                class="badge bg-light text-dark px-3 py-2 rounded-pill border"
+              >
+                {{ cat }}
+              </span>
             </div>
+
             <h1 class="fw-bold mb-2 text-dark">{{ product.title }}</h1>
+
             <div class="text-muted mb-4">
-              ⏱ Zubereitung: <strong>{{ product.time }}</strong>
+              Zubereitung: <strong>{{ product.time }}</strong>
             </div>
           </div>
 
-          <h5 class="mb-3">Zubereitung:</h5>
-          <p class="instructions-text mb-4">
-            {{ product.description }}
-          </p>
+          <div class="mb-4">
+            <h5 class="mb-3">Zubereitung</h5>
+            <div v-if="product.steps && product.steps.length" class="steps">
+              <div v-for="(step, idx) in product.steps" :key="idx" class="step-item">
+                <div class="fw-semibold mb-1">Schritt {{ idx + 1 }}</div>
+                <div class="instructions-text mb-2">
+                  {{ step.text }}
+                </div>
+              </div>
+            </div>
+            <p v-else class="instructions-text mb-0">
+              {{ product.description }}
+            </p>
+          </div>
 
           <div class="mt-auto">
-            <router-link to="/" class="text-decoration-none">
-              <Button variant="accent">← Zurück zur Übersicht</Button>
-            </router-link>
+<div v-if="canManage" class="mt-4 pt-4 border-top">
+              <p class="text-muted small mb-2">Rezept verwalten</p>
 
-            <div class="mt-4 pt-4 border-top">
-              <p class="text-muted small mb-2">Rezept verwalten:</p>
-              <router-link :to="'/edit/' + product.id" class="text-decoration-none">
-                <Button variant="secondary" class="btn-sm w-100">
-                  ✎ Rezept bearbeiten
-                </Button>
-              </router-link>
+              <div class="d-flex flex-column gap-2">
+                <router-link :to="'/edit/' + product.id" class="text-decoration-none">
+                  <Button variant="secondary" class="btn-sm w-100">
+                    Rezept bearbeiten
+                  </Button>
+                </router-link>
+
+                <!-- SCHLICHTER DELETE BUTTON -->
+                <button
+                  class="delete-soft-btn w-100"
+                  type="button"
+                  @click="deleteRecipe"
+                  :disabled="deleting"
+                >
+                  <span v-if="deleting">Wird entfernt…</span>
+                  <span v-else>Rezept entfernen</span>
+                </button>
+
+                <div v-if="deleteError" class="alert alert-danger py-2 mb-0">
+                  {{ deleteError }}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -101,16 +281,96 @@ onMounted(async () => {
 .detail-card {
   border-radius: 30px;
   max-width: 1100px;
+  position: relative;
 }
+
 .detail-image {
   border-radius: 20px;
   object-fit: cover;
   min-height: 300px;
   max-height: 500px;
 }
+
 .instructions-text {
   color: #555;
   line-height: 1.5;
-  white-space: pre-line; /* übernimmt Zeilenumbrüche */
+  white-space: pre-line;
+}
+
+.ingredient-list {
+  padding-left: 18px;
+  margin-bottom: 0;
+  color: #555;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.step-item {
+  padding: 12px 14px;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  background: #fafaf3;
+}
+
+/* SCHLICHTER DELETE BUTTON – COOKED STYLE */
+.delete-soft-btn {
+  background-color: transparent;
+  border: 1px solid rgba(107, 106, 25, 0.4);
+  color: #6b6a19;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.delete-soft-btn:hover {
+  background-color: rgba(107, 106, 25, 0.08);
+}
+
+.delete-soft-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.detail-actions {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 2;
+}
+
+.favorite-fab {
+  border: 0;
+  background: #f4f4ef;
+  color: #b7b7b7;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.favorite-fab:hover {
+  transform: translateY(-1px);
+  color: #d66b6b;
+}
+
+.favorite-fab.active {
+  color: #e03a3a;
+  background: #ffe6e6;
+}
+
+.favorite-fab.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 </style>

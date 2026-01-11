@@ -10,10 +10,13 @@
         
         <div class="d-flex flex-wrap gap-2 ms-auto">
           <router-link to="/" class="button" exact-active-class="active">
-  Home
-</router-link>
-          <a class="button" href="#">Kategorien</a>
-          <a class="button" href="#">Über uns</a>
+            Home
+          </router-link>
+          <router-link :to="{ path: '/', hash: '#recipes' }" class="button"> Kategorien </router-link>
+          <router-link :to="{ path: '/', hash: '#kontakt' }" class="button">Kontakt</router-link>
+
+          <router-link to="/about" class="button" active-class="active">Über uns</router-link>
+
           
           <router-link to="/profile" class="button" active-class="active">
             Profil

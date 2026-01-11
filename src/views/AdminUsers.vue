@@ -1,5 +1,9 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
+import { useAuth0 } from '@auth0/auth0-vue'
+import { authFetch, getApiRoot } from '@/services/apiAuth'
+
+const { getAccessTokenSilently } = useAuth0()
 
 const users = ref([])
 const loading = ref(false)
@@ -11,14 +15,8 @@ const editingId = ref(null)
 const editForm = ref({ name: '', email: '', role: 'USER' })
 const saveLoading = ref(false)
 const saveError = ref('')
-
-// ---- API Root (aus VITE_API_URL ableiten) ----
-function getApiRoot() {
-  // Beispiel: VITE_API_URL = http://localhost:8081/api/recipes
-  // => apiRoot = http://localhost:8081/api
-  const base = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
-  return base.replace(/\/(product|products|recipe|recipes)$/i, '')
-}
+const deleteLoading = ref(false)
+const deleteError = ref('')
 
 // ---- Debounce: Suche nicht bei jedem Buchstaben sofort ----
 let searchTimer = null
@@ -44,7 +42,7 @@ async function loadUsers() {
       ? `${apiRoot}/users?search=${encodeURIComponent(q)}`
       : `${apiRoot}/users`
 
-    const res = await fetch(url)
+    const res = await authFetch(getAccessTokenSilently, url)
     if (!res.ok) throw new Error(await res.text())
 
     users.value = await res.json()
@@ -58,7 +56,6 @@ async function loadUsers() {
 }
 
 function clearSearch() {
-  // watch(search) triggert dann automatisch loadUsers()
   search.value = ''
 }
 
@@ -76,6 +73,27 @@ function cancelEdit() {
   editingId.value = null
   editForm.value = { name: '', email: '', role: 'USER' }
   saveError.value = ''
+}
+
+async function deleteUser(id) {
+  if (!confirm('Diesen Nutzer wirklich loeschen?')) return
+  deleteLoading.value = true
+  deleteError.value = ''
+  try {
+    const apiRoot = getApiRoot()
+    const res = await authFetch(getAccessTokenSilently, `${apiRoot}/users/${id}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok && res.status !== 204) {
+      throw new Error(await res.text())
+    }
+    users.value = users.value.filter(u => u.id !== id)
+  } catch (e) {
+    console.error(e)
+    deleteError.value = e?.message || 'Loeschen fehlgeschlagen'
+  } finally {
+    deleteLoading.value = false
+  }
 }
 
 function validateForm() {
@@ -108,7 +126,7 @@ async function saveUser(id) {
   try {
     const apiRoot = getApiRoot()
 
-    const res = await fetch(`${apiRoot}/users/${id}`, {
+    const res = await authFetch(getAccessTokenSilently, `${apiRoot}/users/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -145,11 +163,14 @@ onMounted(loadUsers)
         class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3"
       >
         <div>
-          <h1 class="fw-bold mb-1">Admin – Nutzerverwaltung</h1>
+          <h1 class="fw-bold mb-1">Admin - Nutzerverwaltung</h1>
           <p class="text-muted mb-0">
             Admins können Nutzer sehen und bearbeiten (kein Anlegen nötig).
           </p>
         </div>
+        <router-link to="/profile" class="btn btn-outline-secondary pill">
+          Zurück zum Dashboard
+        </router-link>
       </div>
 
       <!-- Suche -->
@@ -159,7 +180,7 @@ onMounted(loadUsers)
             v-model="search"
             class="form-control search-input"
             type="text"
-            placeholder="Suchen (Name oder E-Mail)…"
+            placeholder="Suchen (Name oder E-Mail)."
           />
         </div>
 
@@ -179,7 +200,7 @@ onMounted(loadUsers)
       </div>
 
       <!-- Status -->
-      <div v-if="loading" class="alert alert-light border">Lade Nutzer …</div>
+      <div v-if="loading" class="alert alert-light border">Lade Nutzer...</div>
 
       <div v-else-if="error" class="alert alert-danger">
         {{ error }}
@@ -187,6 +208,9 @@ onMounted(loadUsers)
 
       <div v-else-if="users.length === 0" class="alert alert-light border">
         Keine Nutzer gefunden.
+      </div>
+      <div v-if="deleteError" class="alert alert-danger mt-2">
+        {{ deleteError }}
       </div>
 
       <!-- Liste -->
@@ -247,6 +271,15 @@ onMounted(loadUsers)
             >
               Bearbeiten
             </button>
+            <button
+              v-if="editingId !== u.id"
+              class="btn btn-sm btn-outline-danger pill"
+              type="button"
+              @click="deleteUser(u.id)"
+              :disabled="deleteLoading"
+            >
+              Loeschen
+            </button>
 
             <template v-else>
               <button
@@ -263,7 +296,7 @@ onMounted(loadUsers)
                 @click="saveUser(u.id)"
                 :disabled="saveLoading"
               >
-                {{ saveLoading ? 'Speichert…' : 'Speichern' }}
+                {{ saveLoading ? 'Speichert.' : 'Speichern' }}
               </button>
             </template>
           </div>
@@ -292,7 +325,7 @@ onMounted(loadUsers)
   background: #f8f8f0;
 }
 
-/* Dropdown schöner: soft */
+/* Dropdown softer */
 .pill-select {
   border: 1px solid rgba(107, 106, 25, 0.25);
 }
