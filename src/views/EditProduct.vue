@@ -21,6 +21,15 @@ const form = ref({
   steps: [{ text: '' }]
 })
 
+const errors = ref({
+  title: '',
+  categories: '',
+  prepTimeMinutes: '',
+  ingredients: '',
+  steps: '',
+  general: ''
+})
+
 const categories = ref([])
 const dropdownOpen = ref(false)
 const canManage = ref(false)
@@ -70,6 +79,88 @@ function buildDescription(steps) {
   return steps.map((s) => s.text).filter(Boolean).join('\n')
 }
 
+function resetErrors() {
+  errors.value = {
+    title: '',
+    categories: '',
+    prepTimeMinutes: '',
+    ingredients: '',
+    steps: '',
+    general: ''
+  }
+}
+
+function validateIngredients(list) {
+  for (const i of list || []) {
+    const name = (i?.name || '').trim()
+    const amount = (i?.amount || '').trim()
+    if (!name && amount) {
+      return 'Bitte gib einen Namen zur Mengenangabe an.'
+    }
+  }
+  return ''
+}
+
+function validate() {
+  resetErrors()
+
+  const title = form.value.title.trim()
+  const categoryList = Array.isArray(form.value.categories) ? form.value.categories : []
+  const minutes = Number(form.value.prepTimeMinutes)
+
+  let ok = true
+
+  if (!title) {
+    errors.value.title = 'Bitte gib einen Rezeptnamen ein.'
+    ok = false
+  } else if (title.length < 3) {
+    errors.value.title = 'Der Rezeptname sollte mindestens 3 Zeichen haben.'
+    ok = false
+  }
+
+  if (categoryList.length === 0) {
+    errors.value.categories = 'Bitte wähle mindestens eine Kategorie aus.'
+    ok = false
+  }
+
+  if (!form.value.prepTimeMinutes || Number.isNaN(minutes)) {
+    errors.value.prepTimeMinutes = 'Bitte gib eine gültige Zahl in Minuten ein.'
+    ok = false
+  } else if (minutes <= 0) {
+    errors.value.prepTimeMinutes = 'Die Zubereitungszeit muss größer als 0 sein.'
+    ok = false
+  } else if (minutes > 9999) {
+    errors.value.prepTimeMinutes = 'Die Zubereitungszeit ist zu groß.'
+    ok = false
+  }
+
+  const ingredientError = validateIngredients(form.value.ingredients)
+  if (ingredientError) {
+    errors.value.ingredients = ingredientError
+    ok = false
+  }
+
+  const normalizedIngredients = normalizeIngredients(form.value.ingredients)
+  if (normalizedIngredients.length === 0) {
+    errors.value.ingredients = 'Bitte gib mindestens eine Zutat an.'
+    ok = false
+  }
+
+  let hasStepText = false
+  for (const step of form.value.steps) {
+    const text = (step?.text || '').trim()
+    if (text) {
+      hasStepText = true
+    }
+  }
+  if (!hasStepText) {
+    errors.value.steps = 'Bitte gib mindestens einen Zubereitungsschritt an.'
+    ok = false
+  }
+
+  return ok
+}
+
 function descriptionToSteps(description) {
   return (description || '')
     .split('\n')
@@ -97,9 +188,35 @@ async function loadCategories() {
     categories.value = Object.entries(data).map(([value, label]) => ({ value, label }))
   } catch {
     categories.value = [
-      { value: 'ASIAN', label: 'Asiatisch' },
       { value: 'ITALIAN', label: 'Italienisch' },
-      { value: 'VEGETARIAN', label: 'Vegetarisch' }
+      { value: 'ASIAN', label: 'Asiatisch' },
+      { value: 'VEGETARIAN', label: 'Vegetarisch' },
+      { value: 'VEGAN', label: 'Vegan' },
+      { value: 'AMERICAN', label: 'Amerikanisch' },
+      { value: 'DESSERT', label: 'Dessert' },
+      { value: 'GERMAN', label: 'Deutsch' },
+      { value: 'MEDITERRANEAN', label: 'Mediterran' },
+      { value: 'MEXICAN', label: 'Mexikanisch' },
+      { value: 'INDIAN', label: 'Indisch' },
+      { value: 'FRENCH', label: 'Franzoesisch' },
+      { value: 'SPANISH', label: 'Spanisch' },
+      { value: 'MIDDLE_EASTERN', label: 'Orientalisch' },
+      { value: 'THAI', label: 'Thailaendisch' },
+      { value: 'CHINESE', label: 'Chinesisch' },
+      { value: 'JAPANESE', label: 'Japanisch' },
+      { value: 'BREAKFAST', label: 'Fruehstueck' },
+      { value: 'SOUP', label: 'Suppe' },
+      { value: 'SALAD', label: 'Salat' },
+      { value: 'PASTA', label: 'Pasta' },
+      { value: 'BAKING', label: 'Backen' },
+      { value: 'GRILL', label: 'Grillen' },
+      { value: 'SEAFOOD', label: 'Fisch und Meeresfruechte' },
+      { value: 'MEAT', label: 'Fleisch' },
+      { value: 'SIDE', label: 'Beilage' },
+      { value: 'MAIN', label: 'Hauptgericht' },
+      { value: 'APPETIZER', label: 'Vorspeise' },
+      { value: 'SNACK', label: 'Snack' },
+      { value: 'DRINKS', label: 'Getraenke' }
     ]
   }
 }
@@ -181,6 +298,9 @@ onMounted(async () => {
 // UPDATE (Speichern)
 async function updateProduct() {
   try {
+    if (!validate()) return
+    errors.value.general = ''
+
     if (!canManage.value) {
       alert('Keine Berechtigung.')
       return
@@ -212,14 +332,14 @@ async function updateProduct() {
     })
 
     if (!res.ok) {
-      throw new Error(`Fehler beim Speichern (Status ${res.status})`)
+      throw new Error(await res.text())
     }
 
     alert('Änderungen gespeichert!')
     router.push('/')
   } catch (e) {
     console.error(e)
-    alert(e.message)
+    errors.value.general = e?.message || 'Fehler beim Speichern.'
   }
 }
 
@@ -264,10 +384,17 @@ async function deleteProduct() {
         </button>
       </div>
 
+      <div v-if="errors.general" class="alert alert-danger">
+        {{ errors.general }}
+      </div>
+
       <form @submit.prevent="updateProduct">
         <div class="mb-3">
           <label class="form-label small text-muted">Name</label>
           <input v-model="form.title" class="form-control rounded-pill px-3" />
+          <div v-if="errors.title" class="text-danger small mt-1">
+            {{ errors.title }}
+          </div>
         </div>
 
         <div class="row g-3 mb-3">
@@ -300,10 +427,13 @@ async function deleteProduct() {
                       @click.stop
                       @change.stop
                     />
-                    <span>{{ c.label }} ({{ c.value }})</span>
+                    <span>{{ c.label }}</span>
                   </label>
                 </div>
               </div>
+            </div>
+            <div v-if="errors.categories" class="text-danger small mt-1">
+              {{ errors.categories }}
             </div>
           </div>
           <div class="col-md-6">
@@ -313,6 +443,9 @@ async function deleteProduct() {
               type="number"
               class="form-control rounded-pill px-3"
             />
+            <div v-if="errors.prepTimeMinutes" class="text-danger small mt-1">
+              {{ errors.prepTimeMinutes }}
+            </div>
           </div>
         </div>
 
@@ -371,6 +504,9 @@ async function deleteProduct() {
               </button>
             </div>
           </div>
+          <div v-if="errors.ingredients" class="text-danger small mt-1">
+            {{ errors.ingredients }}
+          </div>
         </div>
 
         <!-- Schritte -->
@@ -404,6 +540,9 @@ async function deleteProduct() {
             <button class="btn btn-outline-secondary btn-sm" type="button" @click="addStep">
               + Schritt
             </button>
+          </div>
+          <div v-if="errors.steps" class="text-danger small mt-2">
+            {{ errors.steps }}
           </div>
         </div>
 

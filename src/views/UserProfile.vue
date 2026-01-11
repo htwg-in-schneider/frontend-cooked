@@ -67,8 +67,27 @@ function cancelEdit() {
   error.value = ''
 }
 
+function validateProfile() {
+  const name = nameInput.value.trim()
+  const email = emailInput.value.trim()
+
+  if (!name) return 'Name darf nicht leer sein'
+  if (name.length < 2) return 'Name ist zu kurz (mind. 2 Zeichen)'
+
+  if (!email) return 'E-Mail darf nicht leer sein'
+  if (!/^\S+@\S+\.\S+$/.test(email)) return 'E-Mail muss gültig sein'
+
+  return ''
+}
+
 async function saveProfile() {
   if (!isAuthenticated.value) return
+  const msg = validateProfile()
+  if (msg) {
+    error.value = msg
+    return
+  }
+
   saving.value = true
   error.value = ''
 

@@ -6,8 +6,7 @@ import FooterLink from './FooterLink.vue'
   <footer class="text-center py-5 footer-bg">
     <div class="mb-3">
       <FooterLink to="/impressum">Impressum</FooterLink>
-<FooterLink to="/datenschutz">Datenschutz</FooterLink>
-<FooterLink to="/kontakt">Kontakt</FooterLink>
+      <FooterLink to="/datenschutz">Datenschutz</FooterLink>
 
     </div>
 

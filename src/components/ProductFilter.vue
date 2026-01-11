@@ -81,8 +81,7 @@ onMounted(async () => {
   try {
     const apiRoot = getApiRoot()
 
-    const res = await fetch(`${apiRoot}/category`)
-
+    const res = await fetch(`${apiRoot}/category/translation`)
     if (!res.ok) {
       console.error('Fehler beim Laden der Kategorien:', await res.text())
       categories.value = []
@@ -90,24 +89,11 @@ onMounted(async () => {
     }
 
     const data = await res.json()
-
-    if (Array.isArray(data)) {
-      if (data.length > 0 && typeof data[0] === 'string') {
-        categories.value = data.map(code => ({
-          code,
-          label: code // Notfalls direkt Enum anzeigen
-        }))
-      } else {
-        categories.value = data.map(item => ({
-          code: item.code || item.name || item,
-          label:
-            item.germanName ||
-            item.label ||
-            item.code ||
-            item.name ||
-            String(item)
-        }))
-      }
+    if (data && typeof data === 'object') {
+      categories.value = Object.entries(data).map(([code, label]) => ({
+        code,
+        label
+      }))
     } else {
       categories.value = []
     }
@@ -152,7 +138,7 @@ function resetFilter() {
     class="filter-card bg-white p-4 shadow-sm mb-5 mx-auto"
     :class="{ 'mt-150': !bannerStore.isVisible }"
   >
-    <div class="row g-3 align-items-end">
+    <div class="row g-3 align-items-end filter-row">
       <!-- Suche -->
       <div class="col-md-4">
         <label class="form-label small text-muted fw-bold">Suche</label>
@@ -165,7 +151,7 @@ function resetFilter() {
         >
       </div>
       <!-- Kategorie -->
-      <div class="col-md-3">
+      <div class="col-md-4">
         <label class="form-label small text-muted fw-bold">Kategorie</label>
         <div class="category-dropdown">
           <button
@@ -180,16 +166,8 @@ function resetFilter() {
           </button>
 
           <div v-if="dropdownOpen" class="category-menu shadow-sm">
-            <input
-              v-model="categoryQuery"
-              type="text"
-              class="form-control rounded-pill px-3 mb-2"
-              placeholder="Kategorie suchen"
-              @input="emitFilters"
-            />
-
             <div
-              v-for="tag in filteredCategories"
+              v-for="tag in categories"
               :key="tag.code"
               class="category-item"
             >
@@ -204,16 +182,12 @@ function resetFilter() {
                 <span>{{ tag.label }}</span>
               </label>
             </div>
-
-            <div v-if="filteredCategories.length === 0" class="form-text small ps-2">
-              Keine Kategorien gefunden.
-            </div>
           </div>
         </div>
       </div>
 
             <!-- Sortieren -->
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label small text-muted fw-bold">Sortieren</label>
         <div class="sort-dropdown">
           <button
@@ -281,8 +255,12 @@ function resetFilter() {
   margin-top: 120px !important;
 }
 
-.category-dropdown {
+.filter-row {
   position: relative;
+}
+
+.category-dropdown {
+  position: static;
 }
 
 .category-toggle {
@@ -297,14 +275,21 @@ function resetFilter() {
   background: #fff;
   border: 1px solid #eee;
   border-radius: 16px;
-  padding: 10px 12px;
-  max-height: 220px;
+  padding: 12px 14px;
+  max-height: 320px;
   overflow-y: auto;
   z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 4px 8px;
 }
 
 .category-item {
-  padding: 6px 4px;
+  padding: 4px 2px;
+}
+
+.category-item label {
+  width: 100%;
 }
 
 .category-menu .form-check-input {

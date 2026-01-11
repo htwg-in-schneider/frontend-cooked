@@ -182,9 +182,35 @@ async function loadCategories() {
   } catch {
     // Fallback, falls der Endpoint nicht erreichbar ist
     categories.value = [
-      { value: 'ASIAN', label: 'Asiatisch' },
       { value: 'ITALIAN', label: 'Italienisch' },
-      { value: 'VEGETARIAN', label: 'Vegetarisch' }
+      { value: 'ASIAN', label: 'Asiatisch' },
+      { value: 'VEGETARIAN', label: 'Vegetarisch' },
+      { value: 'VEGAN', label: 'Vegan' },
+      { value: 'AMERICAN', label: 'Amerikanisch' },
+      { value: 'DESSERT', label: 'Dessert' },
+      { value: 'GERMAN', label: 'Deutsch' },
+      { value: 'MEDITERRANEAN', label: 'Mediterran' },
+      { value: 'MEXICAN', label: 'Mexikanisch' },
+      { value: 'INDIAN', label: 'Indisch' },
+      { value: 'FRENCH', label: 'Franzoesisch' },
+      { value: 'SPANISH', label: 'Spanisch' },
+      { value: 'MIDDLE_EASTERN', label: 'Orientalisch' },
+      { value: 'THAI', label: 'Thailaendisch' },
+      { value: 'CHINESE', label: 'Chinesisch' },
+      { value: 'JAPANESE', label: 'Japanisch' },
+      { value: 'BREAKFAST', label: 'Fruehstueck' },
+      { value: 'SOUP', label: 'Suppe' },
+      { value: 'SALAD', label: 'Salat' },
+      { value: 'PASTA', label: 'Pasta' },
+      { value: 'BAKING', label: 'Backen' },
+      { value: 'GRILL', label: 'Grillen' },
+      { value: 'SEAFOOD', label: 'Fisch und Meeresfruechte' },
+      { value: 'MEAT', label: 'Fleisch' },
+      { value: 'SIDE', label: 'Beilage' },
+      { value: 'MAIN', label: 'Hauptgericht' },
+      { value: 'APPETIZER', label: 'Vorspeise' },
+      { value: 'SNACK', label: 'Snack' },
+      { value: 'DRINKS', label: 'Getraenke' }
     ]
   }
 }
@@ -303,7 +329,7 @@ onBeforeUnmount(() => {
                       @click.stop
                       @change.stop
                     />
-                    <span>{{ c.label }} ({{ c.value }})</span>
+                    <span>{{ c.label }}</span>
                   </label>
                 </div>
               </div>

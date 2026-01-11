@@ -8,6 +8,7 @@ import { authFetch, getApiCollection } from '@/services/apiAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
+import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,16 +50,19 @@ async function loadProduct() {
       ? data.steps
       : descriptionToSteps(data.description)
     const ingredients = Array.isArray(data.ingredients) ? data.ingredients : []
-    const categories = Array.isArray(data.categories)
+    const categoryCodes = Array.isArray(data.categories)
       ? data.categories
       : data.category
         ? [data.category]
         : []
 
+    const categoryMap = await loadCategoryMap()
+
     product.value = {
       id: data.id,
       title: data.title,
-      categories,
+      categories: mapCategoryLabels(categoryCodes, categoryMap),
+      categoryCodes,
       time: data.prepTimeMinutes + ' min',
       image: data.imageUrl,
       description: data.description,

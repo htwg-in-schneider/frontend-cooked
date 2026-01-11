@@ -3,11 +3,13 @@ import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import SpecialBanner from '@/components/SpecialBanner.vue'
+import ContactForm from '@/components/ContactForm.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import ProductFilter from '@/components/ProductFilter.vue'
 import Button from '@/components/Button.vue'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
 import { getApiCollection, getApiRoot } from '@/services/apiAuth'
+import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 
 const router = useRouter()
 const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
@@ -26,6 +28,8 @@ async function fetchProducts(filters = {}) {
   }
   
   try {
+    const categoryMap = await loadCategoryMap()
+
     // 1. Basis-URL aus der .env Datei laden (z.B. http://localhost:8081/api/product)
     const baseUrl = getApiCollection()
     
@@ -64,7 +68,7 @@ async function fetchProducts(filters = {}) {
           // ignore rating errors
         }
 
-        const categories = Array.isArray(recipe.categories)
+        const categoryCodes = Array.isArray(recipe.categories)
           ? recipe.categories
           : recipe.category
             ? [recipe.category]
@@ -73,7 +77,8 @@ async function fetchProducts(filters = {}) {
         return {
           id: recipe.id,
           title: recipe.title,
-          categories,
+          categories: mapCategoryLabels(categoryCodes, categoryMap),
+          categoryCodes,
           time: recipe.prepTimeMinutes + ' min',
           durationMinutes: Number(recipe.prepTimeMinutes) || 0,
           image: recipe.imageUrl,
@@ -86,7 +91,7 @@ async function fetchProducts(filters = {}) {
 
     const filtered = selectedCategories.length
       ? enriched.filter((item) => {
-          const cats = Array.isArray(item.categories) ? item.categories : []
+          const cats = Array.isArray(item.categoryCodes) ? item.categoryCodes : []
           return selectedCategories.every((c) => cats.includes(c))
         })
       : enriched
@@ -229,6 +234,16 @@ watch(isAuthenticated, () => {
           />
         </div>
       </div>
+    </section>
+
+    <section id="kontakt" class="py-5">
+      <div class="text-center mb-4">
+        <h2 class="display-6 fw-bold text-dark mb-2">Kontakt</h2>
+        <p class="text-muted mb-0">
+          Fragen, Feedback oder Ideen? Schreib uns direkt.
+        </p>
+      </div>
+      <ContactForm />
     </section>
   </main>
 </template>
