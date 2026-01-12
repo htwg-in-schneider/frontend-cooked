@@ -10,6 +10,7 @@ import Button from '@/components/Button.vue'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
 import { getApiCollection, getApiRoot } from '@/services/apiAuth'
 import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
+import { resolveImageUrl } from '@/services/imageService'
 
 const router = useRouter()
 const route = useRoute()
@@ -102,7 +103,7 @@ async function fetchProducts(filters = {}) {
           categoryCodes,
           time: recipe.prepTimeMinutes + ' min',
           durationMinutes: Number(recipe.prepTimeMinutes) || 0,
-          image: recipe.imageUrl,
+          image: resolveImageUrl(recipe.imageUrl),
           description: recipe.description,
           ratingAvg,
           ratingCount
@@ -272,7 +273,6 @@ watch(
 
       <div v-else-if="products.length === 0" class="text-center py-5 text-muted">
         <p class="fs-4">Keine Rezepte gefunden.</p>
-        <button class="btn btn-link" @click="fetchProducts()">Alle anzeigen</button>
       </div>
 
       <div v-else class="row g-4">

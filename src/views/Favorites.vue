@@ -7,6 +7,7 @@ import Button from '@/components/Button.vue'
 import { fetchFavorites, removeFavorite } from '@/services/favoritesService'
 import { getApiRoot } from '@/services/apiAuth'
 import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
+import { resolveImageUrl } from '@/services/imageService'
 
 const router = useRouter()
 const { getAccessTokenSilently } = useAuth0()
@@ -58,7 +59,7 @@ async function loadFavorites() {
           categoryCodes,
           time: recipe.prepTimeMinutes + ' min',
           durationMinutes: Number(recipe.prepTimeMinutes) || 0,
-          image: recipe.imageUrl,
+          image: resolveImageUrl(recipe.imageUrl),
           description: recipe.description,
           ratingAvg,
           ratingCount

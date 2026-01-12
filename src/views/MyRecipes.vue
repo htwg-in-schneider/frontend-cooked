@@ -6,6 +6,7 @@ import ProductCard from '@/components/ProductCard.vue'
 import Button from '@/components/Button.vue'
 import { authFetch, getApiCollection, getApiRoot } from '@/services/apiAuth'
 import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
+import { resolveImageUrl } from '@/services/imageService'
 
 const router = useRouter()
 const { getAccessTokenSilently } = useAuth0()
@@ -60,7 +61,7 @@ async function loadMyRecipes() {
           categoryCodes,
           time: recipe.prepTimeMinutes + ' min',
           durationMinutes: Number(recipe.prepTimeMinutes) || 0,
-          image: recipe.imageUrl,
+          image: resolveImageUrl(recipe.imageUrl),
           description: recipe.description,
           ratingAvg,
           ratingCount
