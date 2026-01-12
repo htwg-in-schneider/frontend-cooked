@@ -11,7 +11,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 const app = createApp(App)
 
 const redirectUri =
-  import.meta.env.VITE_AUTH0_REDIRECT_URI || `${window.location.origin}${import.meta.env.BASE_URL}`
+  import.meta.env.VITE_AUTH0_REDIRECT_URI || `${window.location.origin}${window.location.pathname}`
 
 app.use(createPinia())
 
