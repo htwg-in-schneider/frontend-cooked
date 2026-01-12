@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
-import { getApiRoot } from '@/services/apiAuth'
+import { authFetch, getApiRoot } from '@/services/apiAuth'
 
 const props = defineProps({
   productId: {
@@ -12,7 +12,7 @@ const props = defineProps({
 
 const reviews = ref([])
 const loading = ref(true)
-const { isAuthenticated, loginWithRedirect } = useAuth0()
+const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
 
 // Formular-States
 const userName = ref('')
@@ -85,7 +85,7 @@ async function submitReview() {
       product: { id: props.productId }
     }
 
-    const res = await fetch(`${apiRoot}/review`, {
+    const res = await authFetch(getAccessTokenSilently, `${apiRoot}/review`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -188,7 +188,7 @@ watch(
 
     <!-- Keine Bewertungen -->
     <div v-else-if="reviews.length === 0" class="text-muted fst-italic">
-      Noch keine Bewertungen fuer dieses Rezept. Sei der Erste!
+      Noch keine Bewertungen für dieses Rezept. Sei der Erste!
     </div>
 
     <!-- Liste der Bewertungen -->

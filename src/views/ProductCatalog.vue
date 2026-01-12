@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import SpecialBanner from '@/components/SpecialBanner.vue'
 import ContactForm from '@/components/ContactForm.vue'
@@ -12,6 +12,7 @@ import { getApiCollection, getApiRoot } from '@/services/apiAuth'
 import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 
 const router = useRouter()
+const route = useRoute()
 const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
 const products = ref([])
 const loading = ref(true)
@@ -46,16 +47,16 @@ async function fetchProducts(filters = {}) {
   if (filters.sortBy) {
     activeSort.value = filters.sortBy
   }
-  
+
   try {
     const categoryMap = await loadCategoryMap()
 
     // 1. Basis-URL aus der .env Datei laden (z.B. http://localhost:8081/api/product)
     const baseUrl = getApiCollection()
-    
+
     // Wir nutzen URLSearchParams, um die URL sauber zusammenzubauen
     const url = new URL(baseUrl)
-    
+
     // 2. Parameter für dein Spring Boot Backend setzen
     if (filters.name) {
       url.searchParams.append('name', filters.name)
@@ -65,7 +66,7 @@ async function fetchProducts(filters = {}) {
     // 3. Daten abrufen
     const res = await fetch(url.toString())
     if (!res.ok) throw new Error('Fehler beim Laden')
-    
+
     const data = await res.json()
 
     const apiRoot = getApiRoot()
@@ -175,6 +176,14 @@ function goToDetail(product) {
   router.push({ name: 'product-detail', params: { id: product.id } })
 }
 
+function scrollToHash(hash) {
+  if (!hash) return
+  const el = document.querySelector(hash)
+  if (!el) return
+  const y = el.getBoundingClientRect().top + window.pageYOffset - 80
+  window.scrollTo({ top: y, behavior: 'auto' })
+}
+
 async function loadFavorites() {
   if (!isAuthenticated.value) {
     favoriteIds.value = new Set()
@@ -209,6 +218,26 @@ async function toggleFavorite(product) {
 watch(isAuthenticated, () => {
   loadFavorites()
 })
+
+watch(
+  () => loading.value,
+  async (isLoading) => {
+    if (!isLoading && route.hash) {
+      await nextTick()
+      scrollToHash(route.hash)
+    }
+  }
+)
+
+watch(
+  () => route.hash,
+  async (hash) => {
+    if (hash && !loading.value) {
+      await nextTick()
+      scrollToHash(hash)
+    }
+  }
+)
 </script>
 
 <template>
@@ -247,12 +276,12 @@ watch(isAuthenticated, () => {
       </div>
 
       <div v-else class="row g-4">
-        <div 
-          class="col-12 col-md-6 col-lg-4" 
-          v-for="product in products" 
+        <div
+          class="col-12 col-md-6 col-lg-4"
+          v-for="product in products"
           :key="product.id"
         >
-          <ProductCard 
+          <ProductCard
             :product="product"
             :is-favorite="favoriteIds.has(product.id)"
             :can-favorite="isAuthenticated"
