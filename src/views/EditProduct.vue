@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
 import Button from '@/components/Button.vue'
 import { authFetch, getApiCollection, getApiRoot } from '@/services/apiAuth'
+import { resolveImageUrl } from '@/services/imageService'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,13 +34,102 @@ const errors = ref({
 const categories = ref([])
 const dropdownOpen = ref(false)
 const canManage = ref(false)
+const previewImage = computed(() => resolveImageUrl(form.value.image))
+
+const cuisineCodes = new Set([
+  'ITALIAN',
+  'FRENCH',
+  'ASIAN',
+  'AMERICAN',
+  'GERMAN',
+  'MEDITERRANEAN',
+  'MEXICAN',
+  'INDIAN',
+  'MIDDLE_EASTERN',
+  'THAI',
+  'CHINESE',
+  'JAPANESE',
+  'SPANISH'
+])
+
+const dishTypeCodes = new Set([
+  'BREAKFAST',
+  'APPETIZER',
+  'MAIN',
+  'DESSERT',
+  'SNACK',
+  'SOUP',
+  'SIDE'
+])
+
+const dietCodes = new Set(['VEGETARIAN', 'VEGAN', 'MEAT', 'SEAFOOD'])
+
+const focusCodes = new Set(['PASTA', 'GRILL', 'DRINKS'])
+
+const categoryLabelMap = computed(() => {
+  const map = new Map()
+  for (const c of categories.value) {
+    map.set(c.value, c.label || c.value)
+  }
+  return map
+})
 
 const selectedCategoryLabels = computed(() => {
-  const selected = new Set(form.value.categories || [])
-  return categories.value
-    .filter((c) => selected.has(c.value))
-    .map((c) => c.label || c.value)
+  const selected = (form.value.categories || []).filter(Boolean)
+  if (!selected.length) return []
+
+  const map = categoryLabelMap.value
+  const selectedCuisineCode = selected.find((c) => cuisineCodes.has(c))
+  const cuisineLabel = selectedCuisineCode ? map.get(selectedCuisineCode) : null
+  const other = selected
+    .filter((c) => c !== selectedCuisineCode)
+    .map((c) => map.get(c) || c)
+    .sort((a, b) => a.localeCompare(b, 'de'))
+  return [cuisineLabel, ...other].filter(Boolean)
 })
+
+const sortedCategories = computed(() => {
+  const selected = new Set(form.value.categories || [])
+  return categories.value.slice().sort((a, b) => {
+    const aSelected = selected.has(a.value)
+    const bSelected = selected.has(b.value)
+    if (aSelected && !bSelected) return -1
+    if (bSelected && !aSelected) return 1
+    const aGroup = groupRank(a.value)
+    const bGroup = groupRank(b.value)
+    if (aGroup !== bGroup) return aGroup - bGroup
+    const aLabel = (a.label || a.value).toLowerCase()
+    const bLabel = (b.label || b.value).toLowerCase()
+    return aLabel.localeCompare(bLabel, 'de')
+  })
+})
+
+const selectedCuisine = computed(() =>
+  (form.value.categories || []).filter((c) => cuisineCodes.has(c))
+)
+
+function groupRank(code) {
+  if (dishTypeCodes.has(code)) return 1
+  if (cuisineCodes.has(code)) return 2
+  if (dietCodes.has(code)) return 3
+  if (focusCodes.has(code)) return 4
+  return 5
+}
+
+function isCuisine(code) {
+  return cuisineCodes.has(code)
+}
+
+function onCategoryChange(code, event) {
+  if (!isCuisine(code)) {
+    return
+  }
+  if (event?.target?.checked) {
+    form.value.categories = (form.value.categories || []).filter(
+      (c) => !isCuisine(c) || c === code
+    )
+  }
+}
 
 function toggleDropdown() {
   dropdownOpen.value = !dropdownOpen.value
@@ -414,18 +504,22 @@ async function deleteProduct() {
 
               <div v-if="dropdownOpen" class="category-menu shadow-sm">
                 <div
-                  v-for="c in categories"
+                  v-for="c in sortedCategories"
                   :key="c.value"
                   class="category-item"
                 >
-                  <label class="d-flex align-items-center gap-2 mb-0" @click.stop>
+                  <label
+                    class="d-flex align-items-center gap-2 mb-0"
+                    :class="{ 'category-disabled': selectedCuisine.length && isCuisine(c.value) && !form.categories.includes(c.value) }"
+                    @click.stop
+                  >
                     <input
                       type="checkbox"
                       class="form-check-input"
                       :value="c.value"
                       v-model="form.categories"
                       @click.stop
-                      @change.stop
+                      @change.stop="onCategoryChange(c.value, $event)"
                     />
                     <span>{{ c.label }}</span>
                   </label>
@@ -458,7 +552,7 @@ async function deleteProduct() {
           />
           <div v-if="form.image" class="text-center">
             <img
-              :src="form.image"
+              :src="previewImage"
               class="img-fluid rounded-4 shadow-sm"
               style="height: 200px; object-fit: cover;"
               alt="Bild Vorschau"
@@ -606,6 +700,10 @@ textarea:focus {
 
 .category-item {
   padding: 6px 4px;
+}
+
+.category-disabled {
+  opacity: 0.45;
 }
 
 .category-menu .form-check-input {

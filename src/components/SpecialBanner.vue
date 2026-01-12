@@ -153,7 +153,7 @@ async function handleCtaClick() {
   
   /* Starker Schatten für 3D-Effekt */
   box-shadow: -15px 15px 40px rgba(0,0,0,0.2);
-  border: 8px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.25);
 }
 
 /* --- Mobile Anpassung --- */
