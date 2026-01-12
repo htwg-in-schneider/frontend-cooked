@@ -242,7 +242,7 @@ const canManage = computed(() => {
           </div>
 
           <div class="mt-auto">
-<div v-if="canManage" class="mt-4 pt-4 border-top">
+            <div v-if="canManage" class="mt-4 pt-4 border-top">
               <p class="text-muted small mb-2">Rezept verwalten</p>
 
               <div class="d-flex flex-column gap-2">
@@ -259,7 +259,7 @@ const canManage = computed(() => {
                   @click="deleteRecipe"
                   :disabled="deleting"
                 >
-                  <span v-if="deleting">Wird entfernt…</span>
+                  <span v-if="deleting">Wird entfernt.</span>
                   <span v-else>Rezept entfernen</span>
                 </button>
 
@@ -316,7 +316,7 @@ const canManage = computed(() => {
   background: #fafaf3;
 }
 
-/* SCHLICHTER DELETE BUTTON – COOKED STYLE */
+/* SCHLICHTER DELETE BUTTON - COOKED STYLE */
 .delete-soft-btn {
   background-color: transparent;
   border: 1px solid rgba(107, 106, 25, 0.4);

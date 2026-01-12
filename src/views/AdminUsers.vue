@@ -18,7 +18,7 @@ const saveError = ref('')
 const deleteLoading = ref(false)
 const deleteError = ref('')
 
-// ---- Debounce: Suche nicht bei jedem Buchstaben sofort ----
+// Debounce: Suche nicht bei jedem Buchstaben sofort
 let searchTimer = null
 
 watch(search, () => {

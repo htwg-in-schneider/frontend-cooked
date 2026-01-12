@@ -192,25 +192,25 @@ async function loadCategories() {
       { value: 'MEDITERRANEAN', label: 'Mediterran' },
       { value: 'MEXICAN', label: 'Mexikanisch' },
       { value: 'INDIAN', label: 'Indisch' },
-      { value: 'FRENCH', label: 'Franzoesisch' },
+      { value: 'FRENCH', label: 'Französisch' },
       { value: 'SPANISH', label: 'Spanisch' },
       { value: 'MIDDLE_EASTERN', label: 'Orientalisch' },
-      { value: 'THAI', label: 'Thailaendisch' },
+      { value: 'THAI', label: 'Thailändisch' },
       { value: 'CHINESE', label: 'Chinesisch' },
       { value: 'JAPANESE', label: 'Japanisch' },
-      { value: 'BREAKFAST', label: 'Fruehstueck' },
+      { value: 'BREAKFAST', label: 'Frühstück' },
       { value: 'SOUP', label: 'Suppe' },
       { value: 'SALAD', label: 'Salat' },
       { value: 'PASTA', label: 'Pasta' },
       { value: 'BAKING', label: 'Backen' },
       { value: 'GRILL', label: 'Grillen' },
-      { value: 'SEAFOOD', label: 'Fisch und Meeresfruechte' },
+      { value: 'SEAFOOD', label: 'Fisch und Meeresfrüchte' },
       { value: 'MEAT', label: 'Fleisch' },
       { value: 'SIDE', label: 'Beilage' },
       { value: 'MAIN', label: 'Hauptgericht' },
       { value: 'APPETIZER', label: 'Vorspeise' },
       { value: 'SNACK', label: 'Snack' },
-      { value: 'DRINKS', label: 'Getraenke' }
+      { value: 'DRINKS', label: 'Getränke' }
     ]
   }
 }
