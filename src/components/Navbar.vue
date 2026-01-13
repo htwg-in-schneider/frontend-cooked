@@ -35,7 +35,7 @@ async function scrollToHash(hash) {
   <nav class="navbar navbar-expand-lg">
     <div class="container-fluid px-5 d-flex align-items-center justify-content-between">
         <router-link to="/">
-          <img class="brand-logo" src="@/assets/logo.png" alt="Cooked Logo" />
+          <img class="brand-logo" src="@/assets/Logo.webp" alt="Cooked Logo" />
         </router-link>
         
         <div class="d-flex flex-wrap gap-2 ms-auto">
