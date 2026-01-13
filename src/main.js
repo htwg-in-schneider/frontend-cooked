@@ -13,6 +13,16 @@ const app = createApp(App)
 const redirectUri =
   import.meta.env.VITE_AUTH0_REDIRECT_URI || `${window.location.origin}${window.location.pathname}`
 
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual'
+}
+
+window.addEventListener('load', () => {
+  if (!window.location.hash) {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }
+})
+
 app.use(createPinia())
 
 const auth0 = createAuth0({

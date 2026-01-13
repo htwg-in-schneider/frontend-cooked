@@ -49,7 +49,16 @@ async function handleCtaClick() {
         </div>
 
         <div class="hero-media">
-          <img class="hero-photo" src="@/assets/Bild_homepage.webp" alt="Bild Homepage" />
+          <img
+            class="hero-photo"
+            src="@/assets/Bild_homepage.webp"
+            alt="Bild Homepage"
+            width="900"
+            height="900"
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+          />
         </div>
       </div>
     </div>
@@ -146,6 +155,8 @@ async function handleCtaClick() {
   height: auto;
   border-radius: 50%;
   object-fit: cover;
+  display: block;
+  aspect-ratio: 1 / 1;
   
 
   margin-right: -20%; 
