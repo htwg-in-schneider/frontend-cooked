@@ -1,18 +1,22 @@
 <script setup>
 import { ref } from 'vue'
 
+const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || ''
+
 const name = ref('')
 const email = ref('')
 const message = ref('')
 
 function sendMail() {
-  const to = 'maiermelina04@gmail.com'
-  const subject = encodeURIComponent(`Kontakt Cooked – von ${name.value}`)
+  if (!contactEmail) {
+    return
+  }
+  const subject = encodeURIComponent(`Kontakt Cooked - von ${name.value}`)
   const body = encodeURIComponent(
     `Name: ${name.value}\nE-Mail: ${email.value}\n\nNachricht:\n${message.value}`
   )
 
-  window.location.href = `mailto:${to}?subject=${subject}&body=${body}`
+  window.location.href = `mailto:${contactEmail}?subject=${subject}&body=${body}`
 }
 </script>
 
@@ -45,7 +49,7 @@ function sendMail() {
             required
           />
 
-          <button type="submit" class="btn btn-success btn-lg">
+          <button type="submit" class="btn btn-success btn-lg" :disabled="!contactEmail">
             Nachricht per E-Mail senden
           </button>
 
