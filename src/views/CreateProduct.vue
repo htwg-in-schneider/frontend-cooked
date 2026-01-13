@@ -9,7 +9,7 @@ import { resolveImageUrl } from '@/services/imageService'
 const router = useRouter()
 const { getAccessTokenSilently } = useAuth0()
 
-const defaultImage = 'https://placehold.co/600x400?text=Neues+Rezept'
+const defaultImage = import.meta.env.VITE_DEFAULT_IMAGE_URL || ''
 const previewImage = computed(() => resolveImageUrl(form.value.image))
 
 const form = ref({
@@ -309,7 +309,7 @@ async function createProduct() {
   if (!validate()) return
 
   // Image default
-  if (!form.value.image) {
+  if (!form.value.image && defaultImage) {
     form.value.image = defaultImage
   }
 

@@ -52,7 +52,9 @@ onMounted(async () => {
 
 function doLogout() {
   authStore.clear()
-  logout({ logoutParams: { returnTo: window.location.origin + '/frontend-cooked/' } })
+  const base = import.meta.env.BASE_URL || '/'
+  const returnTo = new URL(base, window.location.origin).toString()
+  logout({ logoutParams: { returnTo } })
 }
 
 function startEdit() {

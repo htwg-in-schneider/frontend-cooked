@@ -1,3 +1,7 @@
+<script setup>
+const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || ''
+</script>
+
 <template>
   <div class="container py-5">
     <div class="bg-white shadow-sm p-4 p-md-5 mx-auto legal-card">
@@ -10,8 +14,8 @@
       </p>
 
       <h2 class="h5 fw-bold mt-4">Kontakt</h2>
-      <p>
-        E-Mail: maiermelina04@gmail.com
+      <p v-if="contactEmail">
+        E-Mail: {{ contactEmail }}
       </p>
     </div>
   </div>
