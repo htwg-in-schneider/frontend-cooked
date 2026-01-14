@@ -540,6 +540,21 @@ async function addToPlan(dayCode) {
 .plan-item:hover {
   background: #edeedc;
 }
+
+.plan-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 10px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  color: #333;
+  font-weight: 600;
+  z-index: 20;
+}
 /* gleiche Button-Styles wie im Profil */
 .pill {
   border-radius: 999px;
