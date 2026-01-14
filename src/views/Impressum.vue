@@ -72,5 +72,9 @@ const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || ''
   .impressum-grid {
     grid-template-columns: 1fr;
   }
+  .impressum-image {
+    justify-self: start;
+    margin-top: 0;
+  }
 }
 </style>

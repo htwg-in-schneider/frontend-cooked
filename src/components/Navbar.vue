@@ -33,12 +33,12 @@ async function scrollToHash(hash) {
 
 <template>
   <nav class="navbar navbar-expand-lg">
-    <div class="container-fluid px-5 d-flex align-items-center justify-content-between">
+    <div class="container-fluid px-5 nav-container d-flex align-items-center justify-content-between">
         <router-link to="/">
           <img class="brand-logo" src="@/assets/Logo.webp" alt="Cooked Logo" />
         </router-link>
         
-        <div class="d-flex flex-wrap gap-2 ms-auto">
+        <div class="d-flex flex-wrap gap-2 ms-auto nav-links">
           <router-link to="/" class="button" exact-active-class="active">
             Home
           </router-link>
@@ -47,7 +47,6 @@ async function scrollToHash(hash) {
 
           <router-link to="/about" class="button" active-class="active">Über uns</router-link>
 
-          
           <router-link to="/profile" class="button" active-class="active">
             Profil
           </router-link>
@@ -92,5 +91,17 @@ async function scrollToHash(hash) {
 .active {
   background-color: #6b6a19;
   color: white;
+}
+
+@media (max-width: 576px) {
+  .navbar .nav-container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .navbar .nav-links {
+    margin-left: 0 !important;
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 </style>

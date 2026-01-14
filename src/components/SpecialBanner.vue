@@ -29,7 +29,7 @@ async function handleCtaClick() {
       ✕
     </button>
 
-    <div class="container-fluid px-5">
+    <div class="container-fluid px-5 banner-container">
       <div class="hero-grid">
         <div class="hero-copy">
           <h1 class="hero-title">
@@ -182,6 +182,34 @@ async function handleCtaClick() {
     margin-right: 0;
     transform: rotate(0deg);
     max-width: 400px;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .hero .banner-container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .hero-grid {
+    text-align: left;
+  }
+  .hero-copy {
+    margin: 0;
+    padding: 0 0.5rem;
+    text-align: left;
+  }
+  .hero-title {
+    font-size: clamp(30px, 9.5vw, 42px);
+    word-break: break-word;
+  }
+  .hero-sub {
+    font-size: 1rem;
+    margin-left: 0;
+    margin-right: 0;
   }
 }
 </style>
