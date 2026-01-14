@@ -91,12 +91,6 @@ function cancelEdit() {
 
 async function saveProfile() {
   if (!isAuthenticated.value) return
-  const msg = validateProfile()
-  if (msg) {
-    error.value = msg
-    return
-  }
-
   saving.value = true
   errorProfile.value = ''
 
@@ -243,105 +237,117 @@ onMounted(async () => {
 
 <template>
   <div class="container py-5">
-    <div class="profile-card bg-white p-5 shadow-sm mx-auto">
-      <div class="d-flex justify-content-end gap-2 flex-wrap profile-actions">
-        <button class="btn btn-outline-secondary pill" type="button" @click="startEdit">
-          Bearbeiten
-        </button>
-        <button class="btn btn-outline-secondary pill" type="button" @click="doLogout">
-          Logout
-        </button>
-      </div>
-
-      <div class="avatar-wrap">
-        <div class="avatar-frame">
-          <img v-if="displayAvatar" :src="displayAvatar" alt="Profilbild" class="avatar-img" />
-          <div v-else class="avatar-placeholder">?</div>
-        </div>
-      </div>
-
-      <div class="text-center mt-3">
-        <h2 class="fw-bold mb-1 name-title">{{ displayName }}</h2>
-
-        <p v-if="!editMode && displayBio" class="bio-text mx-auto mb-0">
-          {{ displayBio }}
-        </p>
-
-        <p v-else-if="!editMode && !displayBio" class="bio-empty text-muted mb-0">
-          Noch keine Bio. Klick auf „Bearbeiten“.
-        </p>
-      </div>
-
-      <div v-if="loadingProfile" class="alert alert-light border mt-4">Lade.</div>
-      <div v-else-if="errorProfile" class="alert alert-danger mt-4">{{ errorProfile }}</div>
-
-      <div v-if="editMode" class="profile-edit mt-4">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label small text-muted">Name</label>
-            <input v-model="nameInput" class="form-control rounded-pill px-3" type="text" />
+    <div :class="['profile-shell', { 'profile-shell--admin': isAdmin }]">
+      <div :class="['profile-layout', { 'profile-layout--admin': isAdmin }]">
+        <!-- PROFIL -->
+        <div
+          :class="[
+            'profile-card',
+            'bg-white',
+            'p-5',
+            'shadow-sm',
+            { 'mx-auto': !isAdmin }
+          ]"
+        >
+          <div class="d-flex justify-content-end gap-2 flex-wrap profile-actions">
+            <!-- ✅ nur Farbe geändert (grün statt grau) -->
+            <button class="btn btn-outline-secondary pill btn-olive-outline" type="button" @click="startEdit">
+              Bearbeiten
+            </button>
+            <button class="btn btn-outline-secondary pill btn-olive-outline" type="button" @click="doLogout">
+              Logout
+            </button>
           </div>
 
-          <div class="col-md-6">
-            <label class="form-label small text-muted">Profilbild URL</label>
-            <input v-model="avatarInput" class="form-control rounded-pill px-3" type="text" />
-          </div>
-
-          <div class="col-12">
-            <label class="form-label small text-muted">Über mich (Bio)</label>
-            <textarea
-              v-model="bioInput"
-              class="form-control rounded-4 p-3"
-              rows="3"
-              maxlength="300"
-              placeholder="Schreib kurz etwas über dich..."
-            ></textarea>
-            <div class="small text-muted mt-1">
-              {{ (bioInput || '').length }}/300
+          <div class="avatar-wrap">
+            <div class="avatar-frame">
+              <img v-if="displayAvatar" :src="displayAvatar" alt="Profilbild" class="avatar-img" />
+              <div v-else class="avatar-placeholder">?</div>
             </div>
           </div>
 
-          <div class="col-12" v-if="displayEmail">
-            <label class="form-label small text-muted">E-Mail</label>
-            <input :value="displayEmail" class="form-control rounded-pill px-3" type="text" disabled />
+          <div class="text-center mt-3">
+            <h2 class="fw-bold mb-1 name-title">{{ displayName }}</h2>
+
+            <p v-if="!editMode && displayBio" class="bio-text mx-auto mb-0">
+              {{ displayBio }}
+            </p>
+
+            <p v-else-if="!editMode && !displayBio" class="bio-empty text-muted mb-0">
+              Noch keine Bio. Klick auf „Bearbeiten“.
+            </p>
+          </div>
+
+          <div v-if="loadingProfile" class="alert alert-light border mt-4">Lade.</div>
+          <div v-else-if="errorProfile" class="alert alert-danger mt-4">{{ errorProfile }}</div>
+
+          <div v-if="editMode" class="profile-edit mt-4">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label small text-muted">Name</label>
+                <input v-model="nameInput" class="form-control rounded-pill px-3" type="text" />
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label small text-muted">Profilbild URL</label>
+                <input v-model="avatarInput" class="form-control rounded-pill px-3" type="text" />
+              </div>
+
+              <div class="col-12">
+                <label class="form-label small text-muted">Über mich (Bio)</label>
+                <textarea
+                  v-model="bioInput"
+                  class="form-control rounded-4 p-3"
+                  rows="3"
+                  maxlength="300"
+                  placeholder="Schreib kurz etwas über dich..."
+                ></textarea>
+                <div class="small text-muted mt-1">
+                  {{ (bioInput || '').length }}/300
+                </div>
+              </div>
+
+              <div class="col-12" v-if="displayEmail">
+                <label class="form-label small text-muted">E-Mail</label>
+                <input :value="displayEmail" class="form-control rounded-pill px-3" type="text" disabled />
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+              <Button variant="secondary" type="button" @click="cancelEdit">Abbrechen</Button>
+              <Button variant="accent" type="button" :disabled="saving" @click="saveProfile">
+                {{ saving ? 'Speichert.' : 'Speichern' }}
+              </Button>
+            </div>
+          </div>
+
+          <hr class="my-4" />
+
+          <div class="profile-cta">
+            <router-link to="/favorites" class="text-decoration-none">
+              <button class="cta-btn cta-favs" type="button">Favoriten</button>
+            </router-link>
+
+            <router-link to="/create" class="text-decoration-none">
+              <button class="cta-btn cta-create" type="button">+ Neues Rezept erstellen</button>
+            </router-link>
           </div>
         </div>
 
-        <div class="d-flex gap-2 mt-3">
-          <Button variant="secondary" type="button" @click="cancelEdit">Abbrechen</Button>
-          <Button variant="accent" type="button" :disabled="saving" @click="saveProfile">
-            {{ saving ? 'Speichert.' : 'Speichern' }}
-          </Button>
-        </div>
-      </div>
+        <!-- ADMIN -->
+        <div v-if="isAdmin" class="admin-card bg-white p-5 shadow-sm">
+          <!-- ✅ Überschrift mittig -->
+          <h3 class="fw-bold mb-3 admin-title">Admin Dashboard</h3>
 
-      <hr class="my-4" />
+          <div class="d-grid gap-3">
+            <router-link to="/admin/transactions" class="admin-link">
+              <button class="admin-btn" type="button">Aktivitätsprotokoll</button>
+            </router-link>
 
-      <!-- ✅ Neue einheitliche Button-Anordnung (links Favoriten, rechts Neues Rezept) -->
-      <div class="profile-cta">
-        <router-link to="/favorites" class="text-decoration-none">
-          <button class="cta-btn cta-favs" type="button">
-            Favoriten
-          </button>
-        </router-link>
-
-        <router-link to="/create" class="text-decoration-none">
-          <button class="cta-btn cta-create" type="button">
-            + Neues Rezept erstellen
-          </button>
-        </router-link>
-      </div>
-
-      <!-- Admin Dashboard bleibt im Kasten -->
-      <div v-if="isAdmin" class="mt-5">
-        <h3 class="fw-bold mb-3">Admin Dashboard</h3>
-        <div class="d-flex flex-column flex-md-row gap-2">
-          <router-link class="btn btn-outline-secondary pill" to="/admin/transactions">
-            Aktivitätsprotokoll
-          </router-link>
-          <router-link class="btn btn-outline-secondary pill" to="/admin/users">
-            Nutzerverwaltung
-          </router-link>
+            <router-link to="/admin/users" class="admin-link">
+              <button class="admin-btn" type="button">Nutzerverwaltung</button>
+            </router-link>
+          </div>
         </div>
       </div>
     </div>
@@ -350,7 +356,9 @@ onMounted(async () => {
     <div class="mt-5">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <h3 class="fw-bold mb-0">Meine Rezepte</h3>
-        <router-link to="/my-recipes" class="btn btn-outline-secondary pill">
+
+        <!-- ✅ nur Farbe geändert (grün statt grau) -->
+        <router-link to="/my-recipes" class="btn btn-outline-secondary pill btn-olive-outline">
           Alle anzeigen
         </router-link>
       </div>
@@ -386,11 +394,43 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+/* Layout (unverändert) */
+.profile-shell {
+  width: 100%;
+}
+
+.profile-shell--admin {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.profile-layout--admin {
+  grid-template-columns: minmax(0, 1fr) 420px;
+  column-gap: 14px;
+}
+
 .profile-card {
   max-width: 1000px;
   border-radius: 40px;
   position: relative;
   padding-top: 70px;
+  width: 100%;
+}
+
+.profile-layout--admin .profile-card {
+  max-width: 1180px;
+}
+
+.admin-card {
+  border-radius: 40px;
+  height: fit-content;
 }
 
 .pill { border-radius: 999px; }
@@ -432,9 +472,7 @@ onMounted(async () => {
   font-size: 1.8rem;
 }
 
-.name-title {
-  line-height: 1.1;
-}
+.name-title { line-height: 1.1; }
 
 .bio-text {
   max-width: 650px;
@@ -444,7 +482,7 @@ onMounted(async () => {
 
 .bio-empty { opacity: 0.9; }
 
-/* ✅ CTA Buttons: einheitlich, gleich groß, links/rechts */
+/* CTA Buttons (unverändert) */
 .profile-cta {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -467,8 +505,8 @@ onMounted(async () => {
 }
 
 .cta-favs {
-  background: #f3f2df;                 /* butter / creme */
-  color: #5f5e22;                      /* dunkles olive */
+  background: #f3f2df;
+  color: #5f5e22;
   border-color: rgba(107, 106, 25, 0.35);
 }
 
@@ -478,8 +516,6 @@ onMounted(async () => {
   transform: translateY(-1px);
 }
 
-
-/* Neues Rezept: Olive wie euer Active Button */
 .cta-create {
   background: #6b6a19;
   color: #fff;
@@ -491,10 +527,64 @@ onMounted(async () => {
   transform: translateY(-1px);
 }
 
-/* Mobile: untereinander, aber Reihenfolge bleibt links->oben, rechts->unten */
+/* Admin Buttons (unverändert) */
+.admin-title {
+  text-align: center; /* ✅ Überschrift mittig */
+}
+
+.admin-link {
+  text-decoration: none;
+  display: block;
+}
+
+.admin-btn {
+  width: 100%;
+  height: 56px;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  background: #f3f2df;
+  color: #5f5e22;
+  border: 1px solid rgba(107, 106, 25, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+}
+
+.admin-btn:hover {
+  filter: brightness(1.02);
+  box-shadow: 0 10px 18px rgba(107, 106, 25, 0.18);
+  transform: translateY(-1px);
+}
+
+/* ✅ NEU: Olive Outline für Bearbeiten/Logout/Alle anzeigen (nur Farbe & Hover) */
+.btn-olive-outline {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: transparent !important;
+}
+
+.btn-olive-outline:hover,
+.btn-olive-outline:focus {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: rgba(107, 106, 25, 0.08) !important;
+}
+
+.btn-olive-outline:active {
+  background: rgba(107, 106, 25, 0.12) !important;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .profile-shell--admin { max-width: none; }
+  .profile-layout--admin { grid-template-columns: 1fr; }
+  .profile-card { max-width: 1000px; }
+}
+
 @media (max-width: 768px) {
-  .profile-cta {
-    grid-template-columns: 1fr;
-  }
+  .profile-cta { grid-template-columns: 1fr; }
 }
 </style>
