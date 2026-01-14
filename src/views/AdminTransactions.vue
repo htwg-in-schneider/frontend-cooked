@@ -77,7 +77,7 @@ async function ensureRecipeTitle(recipeId) {
   }
 }
 
-/* ✅ findet IDs in mehreren Formaten:
+/* Findet IDs in mehreren Formaten:
    - "#353"
    - "Rezept 353"
    - "Product 353"
