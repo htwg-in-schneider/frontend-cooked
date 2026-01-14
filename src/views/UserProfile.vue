@@ -268,7 +268,7 @@ onMounted(async () => {
 
           <div class="avatar-wrap">
             <div class="avatar-frame">
-              <!-- ✅ Immer ein Bild: eigenes Avatar oder grauer Standard -->
+              <!-- Immer ein Bild: eigenes Avatar oder grauer Standard -->
               <img
                 :src="displayAvatar"
                 alt="Profilbild"

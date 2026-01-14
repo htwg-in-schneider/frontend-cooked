@@ -161,14 +161,14 @@ onMounted(loadUsers)
         class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3"
       >
         <div>
-          <!-- ✅ Überschrift angepasst -->
+          <!-- Überschrift angepasst -->
           <h1 class="fw-bold mb-1">Nutzerverwaltung</h1>
           <p class="text-muted mb-0">
             Admins können Nutzer sehen und bearbeiten (kein Anlegen nötig).
           </p>
         </div>
 
-        <!-- ✅ Button grün statt grau -->
+        <!-- Button grün statt grau -->
         <router-link to="/profile" class="btn btn-outline-secondary pill btn-olive-outline">
           Zurück zum Dashboard
         </router-link>
@@ -186,7 +186,7 @@ onMounted(loadUsers)
         </div>
 
         <div class="col-12 col-md-auto d-flex gap-2">
-          <!-- ✅ Buttons grün statt grau -->
+          <!-- Buttons grün statt grau -->
           <button class="btn btn-outline-secondary pill btn-olive-outline" type="button" @click="loadUsers">
             Suchen
           </button>
@@ -266,7 +266,7 @@ onMounted(loadUsers)
               {{ u.role }}
             </span>
 
-            <!-- ✅ Bearbeiten grün -->
+            <!-- Bearbeiten grün -->
             <button
               v-if="editingId !== u.id"
               class="btn btn-sm btn-outline-secondary pill btn-olive-outline"
@@ -276,7 +276,7 @@ onMounted(loadUsers)
               Bearbeiten
             </button>
 
-            <!-- ✅ Löschen richtig geschrieben -->
+            <!-- Löschen richtig geschrieben -->
             <button
               v-if="editingId !== u.id"
               class="btn btn-sm btn-outline-danger pill"
@@ -288,7 +288,7 @@ onMounted(loadUsers)
             </button>
 
             <template v-else>
-              <!-- ✅ Abbrechen grün -->
+              <!-- Abbrechen grün -->
               <button
                 class="btn btn-sm btn-outline-secondary pill btn-olive-outline"
                 type="button"
@@ -333,7 +333,7 @@ onMounted(loadUsers)
   background: #f8f8f0;
 }
 
-/* ✅ Olive Outline wie beim Aktivitätsprotokoll */
+/* Olive Outline wie beim Aktivitätsprotokoll */
 .btn-olive-outline {
   border-color: #6b6a19 !important;
   color: #6b6a19 !important;

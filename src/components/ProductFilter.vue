@@ -363,7 +363,7 @@ function applyFilters() {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Wenn der Banner weg ist, schieben wir den Filter runter */
+/* Wenn der Banner weg ist, wird der Filter nach unten verschoben */
 .filter-input {
   height: 38px;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
@@ -560,4 +560,3 @@ function applyFilters() {
 
 
 </style>
-

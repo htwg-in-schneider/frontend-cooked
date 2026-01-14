@@ -19,7 +19,7 @@ export function setupGuards(router, getAuth0) {
       return false
     }
 
-    // 2) Wenn eingeloggt, aber wir kennen "me/role" noch nicht -> vom Backend holen
+    // 2) Wenn eingeloggt, aber "me/role" noch nicht bekannt ist -> vom Backend holen
     if (isAuthenticated.value && !authStore.role) {
       try {
         const me = await loadMe(getAccessTokenSilently)
