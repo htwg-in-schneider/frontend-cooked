@@ -125,10 +125,10 @@ onMounted(loadPlan)
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
         <h1 class="fw-bold mb-0">Mein Wochenplan</h1>
         <div class="d-flex gap-2">
-          <button class="btn btn-outline-secondary" type="button" @click="loadPlan">
+          <button class="btn btn-outline-secondary pill btn-olive-outline" type="button" @click="loadPlan">
             Neu laden
           </button>
-          <button class="btn btn-outline-danger" type="button" @click="clearAll">
+          <button class="btn btn-sm btn-outline-danger pill" type="button" @click="clearAll">
             Alles löschen
           </button>
         </div>
@@ -207,6 +207,34 @@ onMounted(loadPlan)
   max-width: 1600px;
   width: 100%;
   border-radius: 30px;
+}
+
+.pill {
+  border-radius: 999px;
+}
+
+.btn-olive-outline {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: transparent !important;
+}
+
+.btn-olive-outline:hover,
+.btn-olive-outline:focus {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: rgba(107, 106, 25, 0.08) !important;
+}
+
+.btn-olive-outline:active {
+  background: rgba(107, 106, 25, 0.12) !important;
+}
+
+/* Löschen Button softer (wie Nutzerverwaltung) */
+.btn-outline-danger:hover {
+  background-color: #fdecec !important;
+  border-color: #c94c4c !important;
+  color: #8a1f1f !important;
 }
 
 .plan-grid {

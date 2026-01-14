@@ -114,7 +114,7 @@ onMounted(loadData)
       <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
         <h1 class="fw-bold mb-0">Einkaufsliste</h1>
         <div class="d-flex gap-2">
-          <button class="btn btn-outline-secondary" type="button" @click="loadData">
+          <button class="btn btn-outline-secondary pill btn-olive-outline" type="button" @click="loadData">
             Neu laden
           </button>
         </div>
@@ -136,7 +136,7 @@ onMounted(loadData)
                 Portionen: {{ group.totalServings }}
               </span>
               <button
-                class="btn btn-sm btn-outline-secondary"
+                class="btn btn-sm btn-outline-secondary pill btn-olive-outline"
                 type="button"
                 @click="removeRecipe(group.product.id)"
               >
@@ -179,6 +179,27 @@ onMounted(loadData)
 .list-card {
   max-width: 900px;
   border-radius: 30px;
+}
+
+.pill {
+  border-radius: 999px;
+}
+
+.btn-olive-outline {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: transparent !important;
+}
+
+.btn-olive-outline:hover,
+.btn-olive-outline:focus {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: rgba(107, 106, 25, 0.08) !important;
+}
+
+.btn-olive-outline:active {
+  background: rgba(107, 106, 25, 0.12) !important;
 }
 
 .recipe-block {
