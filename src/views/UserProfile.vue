@@ -328,6 +328,18 @@ onMounted(async () => {
               <button class="cta-btn cta-favs" type="button">Favoriten</button>
             </router-link>
 
+        <router-link to="/week-plan" class="text-decoration-none">
+          <button class="cta-btn cta-secondary" type="button">
+            Mein Wochenplan
+          </button>
+        </router-link>
+
+        <router-link to="/shopping-list" class="text-decoration-none">
+          <button class="cta-btn cta-secondary" type="button">
+            Einkaufsliste
+          </button>
+        </router-link>
+
             <router-link to="/create" class="text-decoration-none">
               <button class="cta-btn cta-create" type="button">+ Neues Rezept erstellen</button>
             </router-link>
@@ -516,6 +528,20 @@ onMounted(async () => {
   transform: translateY(-1px);
 }
 
+.cta-secondary {
+  background: #f6f6ef;
+  color: #5f5e22;
+  border-color: rgba(107, 106, 25, 0.25);
+}
+
+.cta-secondary:hover {
+  filter: brightness(1.02);
+  box-shadow: 0 10px 18px rgba(107, 106, 25, 0.12);
+  transform: translateY(-1px);
+}
+
+
+/* Neues Rezept: Olive wie euer Active Button */
 .cta-create {
   background: #6b6a19;
   color: #fff;
