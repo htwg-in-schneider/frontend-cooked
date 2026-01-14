@@ -209,6 +209,7 @@ onMounted(loadData)
   background: #fafaf3;
 }
 
+
 .list-item {
   padding: 6px 0;
 }

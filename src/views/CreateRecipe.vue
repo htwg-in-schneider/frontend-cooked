@@ -150,6 +150,7 @@ function resetErrors() {
     title: '',
     categories: '',
     prepTimeMinutes: '',
+    servings: '',
     ingredients: '',
     steps: '',
     general: ''

@@ -18,7 +18,7 @@ const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0(
 const products = ref([])
 const loading = ref(true)
 const error = ref(null)
-const activeSort = ref('published')
+const activeSort = ref('published_desc')
 const favoriteIds = ref(new Set())
 
 const cuisineCodes = new Set([
@@ -56,7 +56,7 @@ async function fetchProducts(filters = {}) {
     const baseUrl = getApiCollection()
 
     // Wir nutzen URLSearchParams, um die URL sauber zusammenzubauen
-    const url = new URL(baseUrl)
+    const url = new URL(baseUrl, window.location.origin)
 
     // 2. Parameter für dein Spring Boot Backend setzen
     if (filters.name) {

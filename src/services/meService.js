@@ -1,6 +1,5 @@
 // src/services/meService.js
 import { getApiRoot, authFetch } from './apiAuth'
-import { useAuth0 } from '@auth0/auth0-vue'
 
 /**
  * Lädt "me" vom Backend.

@@ -201,7 +201,7 @@ async function addToPlan(dayCode) {
     })
     planOpen.value = false
     const label = weekdays.find((d) => d.code === dayCode)?.label || 'Tag'
-    planSuccess.value = `Zum Wochenplan hinzugefügt (${label}).`
+    planSuccess.value = `Zum Wochenplan hinzugefügt/aktualisiert (${label}).`
   } catch (e) {
     planError.value = e?.message || 'Konnte nicht speichern.'
   } finally {
@@ -294,7 +294,6 @@ async function addToPlan(dayCode) {
             </div>
 
             <div class="d-flex flex-wrap align-items-center gap-3 mb-3 plan-control">
-              <label class="form-label small text-muted mb-1">Wochenplan</label>
               <div class="plan-dropdown">
               <button
                 class="btn btn-outline-secondary pill btn-olive-outline px-4"

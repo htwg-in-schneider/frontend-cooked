@@ -15,7 +15,7 @@ const props = defineProps({
 
 const reviews = ref([])
 const loading = ref(true)
-const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
+const { user, isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
 const defaultAvatarUrl = defaultAvatar
 const authStore = useAuthStore()
 
@@ -118,7 +118,10 @@ async function submitReview() {
 function canDeleteReview(review) {
   if (!isAuthenticated.value || !authStore.me) return false
   if (isAdmin.value) return true
-  return review?.userId && authStore.me?.id && review.userId === authStore.me.id
+  if (review?.userId && authStore.me?.id && review.userId === authStore.me.id) return true
+  const meEmail = (authStore.me?.email || user.value?.email || '').trim().toLowerCase()
+  const reviewEmail = (review?.userEmail || '').trim().toLowerCase()
+  return !!meEmail && meEmail === reviewEmail
 }
 
 async function deleteReview(reviewId) {
