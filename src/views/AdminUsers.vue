@@ -38,9 +38,7 @@ async function loadUsers() {
     const apiRoot = getApiRoot()
     const q = search.value.trim()
 
-    const url = q
-      ? `${apiRoot}/users?search=${encodeURIComponent(q)}`
-      : `${apiRoot}/users`
+    const url = q ? `${apiRoot}/users?search=${encodeURIComponent(q)}` : `${apiRoot}/users`
 
     const res = await authFetch(getAccessTokenSilently, url)
     if (!res.ok) throw new Error(await res.text())
@@ -76,7 +74,7 @@ function cancelEdit() {
 }
 
 async function deleteUser(id) {
-  if (!confirm('Diesen Nutzer wirklich loeschen?')) return
+  if (!confirm('Diesen Nutzer wirklich löschen?')) return
   deleteLoading.value = true
   deleteError.value = ''
   try {
@@ -87,10 +85,10 @@ async function deleteUser(id) {
     if (!res.ok && res.status !== 204) {
       throw new Error(await res.text())
     }
-    users.value = users.value.filter(u => u.id !== id)
+    users.value = users.value.filter((u) => u.id !== id)
   } catch (e) {
     console.error(e)
-    deleteError.value = e?.message || 'Loeschen fehlgeschlagen'
+    deleteError.value = e?.message || 'Löschen fehlgeschlagen'
   } finally {
     deleteLoading.value = false
   }
@@ -142,7 +140,7 @@ async function saveUser(id) {
     }
 
     const updated = await res.json()
-    users.value = users.value.map(u => (u.id === id ? updated : u))
+    users.value = users.value.map((u) => (u.id === id ? updated : u))
 
     cancelEdit()
   } catch (e) {
@@ -163,12 +161,15 @@ onMounted(loadUsers)
         class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3"
       >
         <div>
-          <h1 class="fw-bold mb-1">Admin - Nutzerverwaltung</h1>
+          <!-- ✅ Überschrift angepasst -->
+          <h1 class="fw-bold mb-1">Nutzerverwaltung</h1>
           <p class="text-muted mb-0">
             Admins können Nutzer sehen und bearbeiten (kein Anlegen nötig).
           </p>
         </div>
-        <router-link to="/profile" class="btn btn-outline-secondary pill">
+
+        <!-- ✅ Button grün statt grau -->
+        <router-link to="/profile" class="btn btn-outline-secondary pill btn-olive-outline">
           Zurück zum Dashboard
         </router-link>
       </div>
@@ -185,11 +186,12 @@ onMounted(loadUsers)
         </div>
 
         <div class="col-12 col-md-auto d-flex gap-2">
-          <button class="btn btn-outline-secondary pill" type="button" @click="loadUsers">
+          <!-- ✅ Buttons grün statt grau -->
+          <button class="btn btn-outline-secondary pill btn-olive-outline" type="button" @click="loadUsers">
             Suchen
           </button>
           <button
-            class="btn btn-outline-secondary pill"
+            class="btn btn-outline-secondary pill btn-olive-outline"
             type="button"
             @click="clearSearch"
             :disabled="!search.trim()"
@@ -209,6 +211,7 @@ onMounted(loadUsers)
       <div v-else-if="users.length === 0" class="alert alert-light border">
         Keine Nutzer gefunden.
       </div>
+
       <div v-if="deleteError" class="alert alert-danger mt-2">
         {{ deleteError }}
       </div>
@@ -263,14 +266,17 @@ onMounted(loadUsers)
               {{ u.role }}
             </span>
 
+            <!-- ✅ Bearbeiten grün -->
             <button
               v-if="editingId !== u.id"
-              class="btn btn-sm btn-outline-secondary pill"
+              class="btn btn-sm btn-outline-secondary pill btn-olive-outline"
               type="button"
               @click="startEdit(u)"
             >
               Bearbeiten
             </button>
+
+            <!-- ✅ Löschen richtig geschrieben -->
             <button
               v-if="editingId !== u.id"
               class="btn btn-sm btn-outline-danger pill"
@@ -278,18 +284,20 @@ onMounted(loadUsers)
               @click="deleteUser(u.id)"
               :disabled="deleteLoading"
             >
-              Loeschen
+              Löschen
             </button>
 
             <template v-else>
+              <!-- ✅ Abbrechen grün -->
               <button
-                class="btn btn-sm btn-outline-secondary pill"
+                class="btn btn-sm btn-outline-secondary pill btn-olive-outline"
                 type="button"
                 @click="cancelEdit"
                 :disabled="saveLoading"
               >
                 Abbrechen
               </button>
+
               <button
                 class="btn btn-sm btn-success cooked-save pill"
                 type="button"
@@ -323,6 +331,30 @@ onMounted(loadUsers)
 .pill-select {
   border-radius: 999px;
   background: #f8f8f0;
+}
+
+/* ✅ Olive Outline wie beim Aktivitätsprotokoll */
+.btn-olive-outline {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: transparent !important;
+}
+
+.btn-olive-outline:hover,
+.btn-olive-outline:focus {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: rgba(107, 106, 25, 0.08) !important;
+}
+
+.btn-olive-outline:active {
+  background: rgba(107, 106, 25, 0.12) !important;
+}
+
+.btn-olive-outline:disabled,
+.btn-olive-outline.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* Dropdown softer */
@@ -363,4 +395,11 @@ onMounted(loadUsers)
 .cooked-save:focus-visible {
   box-shadow: none !important;
 }
+/* Löschen Button softer (nicht knallrot) */
+.btn-outline-danger:hover {
+  background-color: #fdecec !important;  /* ganz helles rot */
+  border-color: #c94c4c !important;      /* gedecktes rot */
+  color: #8a1f1f !important;             /* dunkler text */
+}
+
 </style>
