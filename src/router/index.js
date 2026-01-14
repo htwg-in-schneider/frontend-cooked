@@ -1,9 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import ProductCatalog from '../views/ProductCatalog.vue'
-import ProductDetail from '../views/ProductDetail.vue'
-import CreateProduct from '../views/CreateProduct.vue'
-import EditProduct from '../views/EditProduct.vue'
+import ProductCatalog from '../views/RecipeCatalog.vue'
+import ProductDetail from '../views/RecipeDetail.vue'
+import CreateProduct from '../views/CreateRecipe.vue'
+import EditProduct from '../views/EditRecipe.vue'
 import UserProfile from '../views/UserProfile.vue'
 import MyRecipes from '../views/MyRecipes.vue'
 import Favorites from '../views/Favorites.vue'
