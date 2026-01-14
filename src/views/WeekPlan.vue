@@ -69,6 +69,7 @@ async function removeEntry(entry) {
 
 function onDragStart(entry, event) {
   dragId.value = entry.id
+  event.dataTransfer.setData('text/plain', String(entry.id))
   event.dataTransfer.effectAllowed = 'move'
 }
 
@@ -84,9 +85,25 @@ async function onDrop(dayCode) {
   }
 }
 
+async function onTrashDrop() {
+  if (!dragId.value) return
+  try {
+    await deleteMealPlanEntry(getAccessTokenSilently, dragId.value)
+    await loadPlan()
+  } catch (e) {
+    error.value = e?.message || 'Konnte Eintrag nicht entfernen.'
+  } finally {
+    dragId.value = null
+  }
+}
+
 function onDragOver(event) {
   event.preventDefault()
   event.dataTransfer.dropEffect = 'move'
+}
+
+function onDragEnd() {
+  dragId.value = null
 }
 
 async function clearAll() {
@@ -120,57 +137,50 @@ onMounted(loadPlan)
       <div v-if="loading" class="text-muted">Lade Wochenplan...</div>
       <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-      <div v-else class="table-responsive">
-        <table class="table plan-table align-top">
-          <thead>
-            <tr>
-              <th v-for="day in weekdays" :key="day.code">{{ day.label }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td
-                v-for="day in weekdays"
-                :key="day.code"
-                class="plan-cell"
-                @dragover="onDragOver"
-                @drop="onDrop(day.code)"
+      <div v-else class="plan-grid">
+        <div class="plan-grid-head">
+          <div v-for="day in weekdays" :key="day.code" class="plan-head-cell">
+            {{ day.label }}
+          </div>
+        </div>
+        <div class="plan-grid-body">
+          <div
+            v-for="day in weekdays"
+            :key="day.code"
+            class="plan-cell"
+            @dragover="onDragOver"
+            @drop="onDrop(day.code)"
+          >
+            <div v-if="grouped[day.code].length === 0" class="text-muted small">
+              Kein Eintrag
+            </div>
+            <div v-else class="d-flex flex-column gap-2">
+              <div
+                v-for="entry in grouped[day.code]"
+                :key="entry.id"
+                class="plan-entry"
+                :class="{ 'is-dragging': dragId === entry.id }"
+                draggable="true"
+                @dragstart="onDragStart(entry, $event)"
+                @dragend="onDragEnd"
               >
-                <div v-if="grouped[day.code].length === 0" class="text-muted small">
-                  Kein Eintrag
-                </div>
-                <div v-else class="d-flex flex-column gap-2">
-                  <div
-                    v-for="entry in grouped[day.code]"
-                    :key="entry.id"
-                    class="plan-entry"
-                    draggable="true"
-                    @dragstart="onDragStart(entry, $event)"
-                  >
                     <div class="fw-semibold">{{ entry.product?.title }}</div>
                     <div class="d-flex align-items-center gap-2 mt-2">
                       <label class="small text-muted">Portionen</label>
                       <input
                         type="number"
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        class="form-control form-control-sm rounded-pill servings-input no-spin"
                         min="1"
-                        class="form-control form-control-sm rounded-pill servings-input"
                         :value="entry.servings || entry.product?.servings || 1"
                         @change="updateServings(entry, $event.target.value)"
                       />
-                      <button
-                        class="btn btn-sm btn-outline-secondary"
-                        type="button"
-                        @click="removeEntry(entry)"
-                      >
-                        Entfernen
-                      </button>
-                    </div>
-                  </div>
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="mt-4">
@@ -178,29 +188,57 @@ onMounted(loadPlan)
           <Button variant="secondary">Zurück zum Profil</Button>
         </router-link>
       </div>
+
+      <div
+        v-if="dragId"
+        class="trash-zone mt-4"
+        @dragover="onDragOver"
+        @drop="onTrashDrop"
+      >
+        <span class="trash-icon" aria-hidden="true">🗑️</span>
+        <span>Rezept hierher ziehen zum Entfernen</span>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
 .plan-card {
-  max-width: 1100px;
+  max-width: 1600px;
+  width: 100%;
   border-radius: 30px;
 }
 
-.plan-table th {
+.plan-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.plan-grid-head,
+.plan-grid-body {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.plan-head-cell {
   background: #fbfbfb;
-  border-bottom: 1px solid #eceff2;
-  padding: 14px 16px;
+  border: 1px solid #eceff2;
+  border-radius: 16px;
+  padding: 12px 10px;
   font-weight: 700;
-  text-align: left;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .plan-cell {
-  min-width: 160px;
-  padding: 16px;
-  border-top: 1px solid #f1f3f5;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #f1f3f5;
+  border-radius: 16px;
   background: #fff;
+  min-height: 180px;
 }
 
 .plan-entry {
@@ -208,9 +246,69 @@ onMounted(loadPlan)
   border-radius: 16px;
   padding: 10px 12px;
   background: #fafaf3;
+  cursor: grab;
+  user-select: none;
+}
+
+.plan-entry .fw-semibold {
+  font-size: 0.85rem;
+  line-height: 1.2;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.plan-entry.is-dragging {
+  opacity: 0.2;
+  filter: saturate(0.6);
 }
 
 .servings-input {
   max-width: 90px;
+  text-align: center;
+}
+
+.no-spin::-webkit-outer-spin-button,
+.no-spin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spin {
+  -moz-appearance: textfield;
+}
+
+.trash-zone {
+  border: 2px dashed rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  padding: 16px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.trash-icon {
+  font-size: 1.4rem;
+}
+
+@media (max-width: 1200px) {
+  .plan-card {
+    padding: 20px;
+  }
+  .plan-grid-head,
+  .plan-grid-body {
+    gap: 8px;
+  }
+  .plan-cell {
+    padding: 10px;
+  }
+  .plan-head-cell {
+    padding: 10px 8px;
+    font-size: 0.9rem;
+  }
 }
 </style>

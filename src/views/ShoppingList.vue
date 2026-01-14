@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
-import { fetchMealPlan } from '@/services/mealPlanService'
+import { fetchMealPlan, deleteMealPlanEntry } from '@/services/mealPlanService'
 import { fetchShoppingChecks, setShoppingCheck } from '@/services/shoppingService'
 import { scaleIngredientAmount } from '@/services/ingredientScale'
 
@@ -92,6 +92,19 @@ async function toggleCheck(item, productId) {
   }
 }
 
+async function removeRecipe(productId) {
+  const targets = entries.value.filter((e) => e.product?.id === productId)
+  if (!targets.length) return
+  try {
+    await Promise.all(
+      targets.map((entry) => deleteMealPlanEntry(getAccessTokenSilently, entry.id))
+    )
+    await loadData()
+  } catch (e) {
+    error.value = e?.message || 'Konnte Rezept nicht entfernen.'
+  }
+}
+
 onMounted(loadData)
 </script>
 
@@ -118,9 +131,18 @@ onMounted(loadData)
         <div v-for="group in grouped" :key="group.product.id" class="recipe-block">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h4 class="fw-bold mb-0">{{ group.product.title }}</h4>
-            <span class="text-muted small">
-              Portionen: {{ group.totalServings }}
-            </span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted small">
+                Portionen: {{ group.totalServings }}
+              </span>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                type="button"
+                @click="removeRecipe(group.product.id)"
+              >
+                Entfernen
+              </button>
+            </div>
           </div>
 
           <ul class="list-unstyled mb-0">
@@ -130,14 +152,13 @@ onMounted(loadData)
               class="d-flex align-items-start gap-2 list-item"
             >
               <input
-                class="form-check-input mt-1"
+                class="form-check-input mt-1 shopping-check"
                 type="checkbox"
                 :checked="item.checked"
                 @change="toggleCheck(item, group.product.id)"
               />
               <div :class="{ checked: item.checked }">
-                <span v-if="item.amount" class="fw-semibold">{{ item.amount }}</span>
-                <span v-if="item.amount"> </span>
+                <span v-if="item.amount" class="fw-semibold amount">{{ item.amount }}</span>
                 <span>{{ item.name }}</span>
               </div>
             </li>
@@ -174,5 +195,14 @@ onMounted(loadData)
 .checked {
   text-decoration: line-through;
   opacity: 0.6;
+}
+
+.amount {
+  margin-right: 8px;
+}
+
+.shopping-check {
+  accent-color: #6b6a19;
+  border-color: #6b6a19;
 }
 </style>

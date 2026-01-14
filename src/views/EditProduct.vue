@@ -20,7 +20,7 @@ const form = ref({
   servings: '',
   image: '',
   ingredients: [{ name: '', amount: '' }],
-  steps: [{ text: '' }]
+  steps: [{ title: '', text: '' }]
 })
 
 const errors = ref({
@@ -276,6 +276,7 @@ function descriptionToSteps(description) {
 function normalizeSteps(input) {
   const base = Array.isArray(input) && input.length ? input : []
   const steps = base.map((s) => ({
+    title: (s?.title || '').toString(),
     text: (s?.text || '').toString()
   }))
   return steps.length ? steps : [{ text: '' }]
@@ -336,7 +337,7 @@ function removeIngredient(index) {
 }
 
 function addStep() {
-  form.value.steps.push({ text: '' })
+  form.value.steps.push({ title: '', text: '' })
 }
 
 function removeStep(index) {
@@ -416,6 +417,7 @@ async function updateProduct() {
     const ingredients = normalizeIngredients(form.value.ingredients)
     const steps = (form.value.steps || [])
       .map((s) => ({
+        title: (s?.title || '').trim(),
         text: (s?.text || '').trim()
       }))
       .filter((s) => s.text)
@@ -638,7 +640,9 @@ async function deleteProduct() {
 
           <div v-for="(step, stepIndex) in form.steps" :key="stepIndex" class="step-card mb-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <div class="fw-semibold">Schritt {{ stepIndex + 1 }}</div>
+              <div class="fw-semibold">
+                {{ step.title?.trim() || `Schritt ${stepIndex + 1}` }}
+              </div>
               <button
                 class="btn btn-outline-secondary btn-sm"
                 type="button"
@@ -648,6 +652,13 @@ async function deleteProduct() {
                 Entfernen
               </button>
             </div>
+
+            <input
+              v-model="step.title"
+              type="text"
+              class="form-control rounded-pill px-3 mb-2"
+              placeholder="Eigene Überschrift (optional)"
+            />
 
             <textarea
               v-model="step.text"
