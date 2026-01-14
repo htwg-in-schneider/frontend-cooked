@@ -3,7 +3,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
-import ProductReviews from '@/components/ProductReviews.vue'
+import RecipeReviews from '@/components/RecipeReviews.vue'
 import { authFetch, getApiCollection } from '@/services/apiAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
@@ -372,7 +372,7 @@ async function addToPlan(dayCode) {
         </div>
       </div>
 
-      <ProductReviews :productId="product.id" />
+      <RecipeReviews :productId="product.id" />
     </div>
   </div>
 

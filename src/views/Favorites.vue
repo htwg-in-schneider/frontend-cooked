@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
-import ProductCard from '@/components/ProductCard.vue'
+import ProductCard from '@/components/RecipeCard.vue'
 import Button from '@/components/Button.vue'
 import { fetchFavorites, removeFavorite } from '@/services/favoritesService'
 import { getApiRoot } from '@/services/apiAuth'
