@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import { authFetch, getApiRoot } from '@/services/apiAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
+import defaultAvatar from '@/assets/default_avatar.webp'
 
 const props = defineProps({
   productId: {
@@ -15,6 +16,7 @@ const props = defineProps({
 const reviews = ref([])
 const loading = ref(true)
 const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
+const defaultAvatarUrl = defaultAvatar
 const authStore = useAuthStore()
 
 // Formular-States
@@ -226,10 +228,12 @@ watch(isAuthenticated, async (val) => {
       >
         <div class="d-flex align-items-center mb-2">
           <!-- Avatar -->
-          <div
-            class="avatar bg-white text-secondary fw-bold rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm"
-          >
-            {{ review.userName?.charAt(0)?.toUpperCase() }}
+          <div class="avatar me-2 shadow-sm">
+            <img
+              :src="review.avatarUrl || defaultAvatarUrl"
+              alt="Profilbild"
+              class="avatar-img"
+            />
           </div>
 
           <div>
@@ -257,7 +261,19 @@ watch(isAuthenticated, async (val) => {
 .avatar {
   width: 40px;
   height: 40px;
-  font-size: 1.2rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .review-card {

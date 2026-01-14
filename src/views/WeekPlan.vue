@@ -1,10 +1,12 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { fetchMealPlan, updateMealPlanEntry, deleteMealPlanEntry, clearMealPlan } from '@/services/mealPlanService'
 import Button from '@/components/Button.vue'
 
 const { getAccessTokenSilently } = useAuth0()
+const router = useRouter()
 
 const entries = ref([])
 const loading = ref(false)
@@ -55,15 +57,6 @@ async function updateServings(entry, value) {
     entries.value = entries.value.map((e) => (e.id === updated.id ? updated : e))
   } catch (e) {
     error.value = e?.message || 'Konnte Portionen nicht speichern.'
-  }
-}
-
-async function removeEntry(entry) {
-  try {
-    await deleteMealPlanEntry(getAccessTokenSilently, entry.id)
-    entries.value = entries.value.filter((e) => e.id !== entry.id)
-  } catch (e) {
-    error.value = e?.message || 'Konnte Eintrag nicht entfernen.'
   }
 }
 
@@ -164,7 +157,13 @@ onMounted(loadPlan)
                 @dragstart="onDragStart(entry, $event)"
                 @dragend="onDragEnd"
               >
-                    <div class="fw-semibold">{{ entry.product?.title }}</div>
+                <button
+                  class="plan-title"
+                  type="button"
+                  @click="router.push({ name: 'product-detail', params: { id: entry.product?.id } })"
+                >
+                  {{ entry.product?.title }}
+                </button>
                     <div class="d-flex align-items-center gap-2 mt-2">
                       <label class="small text-muted">Portionen</label>
                       <input
@@ -283,6 +282,24 @@ onMounted(loadPlan)
   line-height: 1.2;
   word-break: break-word;
   hyphens: auto;
+}
+
+.plan-title {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: #2b2f33;
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  cursor: pointer;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.plan-title:hover {
+  text-decoration: underline;
 }
 
 .plan-entry.is-dragging {

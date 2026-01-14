@@ -29,6 +29,7 @@ const desiredServings = ref(1)
 const planOpen = ref(false)
 const planLoading = ref(false)
 const planError = ref('')
+const planSuccess = ref('')
 
 const weekdays = [
   { code: 'MONDAY', label: 'Montag' },
@@ -191,6 +192,7 @@ async function addToPlan(dayCode) {
   }
   planLoading.value = true
   planError.value = ''
+  planSuccess.value = ''
   try {
     await addMealPlanEntry(getAccessTokenSilently, {
       productId: product.value.id,
@@ -198,6 +200,8 @@ async function addToPlan(dayCode) {
       servings: desiredServings.value
     })
     planOpen.value = false
+    const label = weekdays.find((d) => d.code === dayCode)?.label || 'Tag'
+    planSuccess.value = `Zum Wochenplan hinzugefügt (${label}).`
   } catch (e) {
     planError.value = e?.message || 'Konnte nicht speichern.'
   } finally {
@@ -314,7 +318,7 @@ async function addToPlan(dayCode) {
               </div>
             </div>
 
-            <div v-if="planError" class="text-danger small mb-3">
+            <div v-if="planError" class="text-danger small mb-2">
               {{ planError }}
             </div>
           </div>
@@ -369,6 +373,10 @@ async function addToPlan(dayCode) {
 
       <ProductReviews :productId="product.id" />
     </div>
+  </div>
+
+  <div v-if="planSuccess" class="plan-toast">
+    {{ planSuccess }}
   </div>
 </template>
 
@@ -530,5 +538,20 @@ async function addToPlan(dayCode) {
 
 .plan-item:hover {
   background: #edeedc;
+}
+
+.plan-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  background: #ffffff;
+  color: #2b2f33;
+  border: 1px solid rgba(107, 106, 25, 0.2);
+  border-radius: 14px;
+  padding: 10px 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  font-size: 0.95rem;
+  z-index: 10;
 }
 </style>

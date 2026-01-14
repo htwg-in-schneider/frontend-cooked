@@ -8,6 +8,7 @@ import ProductCard from '@/components/ProductCard.vue'
 import { loadMe } from '@/services/meService'
 import { authFetch, getApiRoot, getApiCollection } from '@/services/apiAuth'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
+import defaultAvatar from '@/assets/default_avatar.webp'
 
 const router = useRouter()
 const { user, isAuthenticated, getAccessTokenSilently, logout, loginWithRedirect } = useAuth0()
@@ -37,55 +38,16 @@ const displayName = computed(() => {
   return authStore.me?.name || user.value?.name || user.value?.email || 'Profil'
 })
 
-/**
- * ✅ Graues Default-Profilicon (als Data-URI SVG, stabil + ohne externe Links)
- */
-const defaultAvatar =
-  'data:image/svg+xml;charset=UTF-8,' +
-  encodeURIComponent(`<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-  <rect width="256" height="256" rx="128" fill="#E9ECEF"/>
-  <circle cx="128" cy="104" r="44" fill="#ADB5BD"/>
-  <path d="M52 220c10-44 46-68 76-68s66 24 76 68" fill="#ADB5BD"/>
-</svg>`)
-
-/**
- * ✅ Auth0/Gravatar "Default"-Bilder erkennen (die bunten Initialen/Identicons)
- * -> Wenn das nur so ein generierter Avatar ist, behandeln wir es als "kein Avatar"
- */
-function isGeneratedDefaultAvatar(url) {
-  if (!url) return true
-  const u = String(url).trim()
-  if (!u) return true
-
-  // Auth0 Default Avatare (bunte Initialen)
-  if (u.includes('cdn.auth0.com/avatars/')) return true
-
-  // Gravatar Default Styles (identicon/retro/monsterid/wavatar etc.)
-  const lower = u.toLowerCase()
-  if (lower.includes('gravatar.com/avatar')) {
-    if (
-      lower.includes('d=identicon') ||
-      lower.includes('d=retro') ||
-      lower.includes('d=monsterid') ||
-      lower.includes('d=wavatar') ||
-      lower.includes('d=robohash')
-    ) {
-      return true
-    }
-  }
-
-  return false
-}
+const defaultAvatarUrl = defaultAvatar
 
 const displayAvatar = computed(() => {
   const saved = (authStore.me?.avatarUrl || '').trim()
-  if (!saved) return defaultAvatar
+  if (!saved) return defaultAvatarUrl
   return saved
 })
 
 
-const isPlaceholderAvatar = computed(() => displayAvatar.value === defaultAvatar)
+const isPlaceholderAvatar = computed(() => displayAvatar.value === defaultAvatarUrl)
 
 const displayBio = computed(() => {
   return (authStore.me?.bio || '').toString().trim()
@@ -114,7 +76,7 @@ async function ensureMeLoaded() {
 function fillInputsFromStore() {
   nameInput.value = authStore.me?.name || user.value?.name || ''
   emailInput.value = authStore.me?.email || user.value?.email || ''
-  avatarInput.value = authStore.me?.avatarUrl || user.value?.picture || ''
+  avatarInput.value = authStore.me?.avatarUrl || ''
   bioInput.value = authStore.me?.bio || ''
 }
 

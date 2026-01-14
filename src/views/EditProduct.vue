@@ -279,7 +279,7 @@ function normalizeSteps(input) {
     title: (s?.title || '').toString(),
     text: (s?.text || '').toString()
   }))
-  return steps.length ? steps : [{ text: '' }]
+  return steps.length ? steps : [{ title: '', text: '' }]
 }
 
 async function loadCategories() {

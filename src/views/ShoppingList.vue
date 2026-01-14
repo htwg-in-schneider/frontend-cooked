@@ -226,4 +226,13 @@ onMounted(loadData)
   accent-color: #6b6a19;
   border-color: #6b6a19;
 }
+
+.shopping-check:checked {
+  background-color: #6b6a19 !important;
+  border-color: #6b6a19 !important;
+}
+
+.shopping-check:focus {
+  box-shadow: 0 0 0 0.2rem rgba(107, 106, 25, 0.15);
+}
 </style>
