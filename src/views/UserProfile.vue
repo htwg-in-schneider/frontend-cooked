@@ -28,6 +28,8 @@ const bioInput = ref('')
 const myProducts = ref([])
 const loadingMy = ref(false)
 const errorMy = ref('')
+const previewCount = 6
+const previewProducts = computed(() => myProducts.value.slice(0, previewCount))
 
 // Favoriten-State (für Herz/Like überall)
 const favoriteIds = ref(new Set())
@@ -376,7 +378,10 @@ onMounted(async () => {
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <h3 class="fw-bold mb-0">Meine Rezepte</h3>
 
-        <router-link to="/my-recipes" class="btn btn-outline-secondary pill btn-olive-outline">
+        <router-link
+          to="/my-recipes"
+          class="btn btn-outline-secondary pill btn-olive-outline btn-olive-white"
+        >
           Alle anzeigen
         </router-link>
       </div>
@@ -397,7 +402,7 @@ onMounted(async () => {
       </div>
 
       <div v-else class="row g-4">
-        <div class="col-12 col-md-6 col-lg-4" v-for="product in myProducts" :key="product.id">
+        <div class="col-12 col-md-6 col-lg-4" v-for="product in previewProducts" :key="product.id">
           <ProductCard
             :product="product"
             :is-favorite="favoriteIds.has(product.id)"
@@ -606,6 +611,21 @@ onMounted(async () => {
   border-color: #6b6a19 !important;
   color: #6b6a19 !important;
   background: transparent !important;
+}
+
+.btn-olive-outline.btn-olive-white {
+  background: #fff !important;
+}
+
+.btn-olive-outline.btn-olive-white:hover,
+.btn-olive-outline.btn-olive-white:focus {
+  background: #fff !important;
+  box-shadow: inset 0 0 0 999px rgba(107, 106, 25, 0.12) !important;
+}
+
+.btn-olive-outline.btn-olive-white:active {
+  background: #fff !important;
+  box-shadow: inset 0 0 0 999px rgba(107, 106, 25, 0.12) !important;
 }
 
 .btn-olive-outline:hover,
