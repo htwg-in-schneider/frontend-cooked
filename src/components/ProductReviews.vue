@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { authFetch, getApiRoot } from '@/services/apiAuth'
 import { useAuthStore } from '@/stores/authStore'
@@ -28,6 +28,10 @@ const text = ref('')
 const submitLoading = ref(false)
 const submitError = ref('')
 const submitSuccess = ref('')
+const deleteError = ref('')
+const deletingId = ref(null)
+
+const isAdmin = computed(() => (authStore.role || '').toUpperCase() === 'ADMIN')
 
 // Funktion zum Laden der Reviews
 async function fetchReviews() {
@@ -108,6 +112,35 @@ async function submitReview() {
     submitError.value = 'Bewertung konnte nicht gespeichert werden.'
   } finally {
     submitLoading.value = false
+  }
+}
+
+function canDeleteReview(review) {
+  if (!isAuthenticated.value || !authStore.me) return false
+  if (isAdmin.value) return true
+  return review?.userId && authStore.me?.id && review.userId === authStore.me.id
+}
+
+async function deleteReview(reviewId) {
+  deleteError.value = ''
+  if (!isAuthenticated.value) {
+    await loginWithRedirect({ appState: { targetUrl: `/product/${props.productId}` } })
+    return
+  }
+  deletingId.value = reviewId
+  try {
+    const apiRoot = getApiRoot()
+    const res = await authFetch(getAccessTokenSilently, `${apiRoot}/review/${reviewId}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok) throw new Error(await res.text())
+    reviews.value = reviews.value.filter((r) => r.id !== reviewId)
+    await fetchReviews()
+  } catch (e) {
+    console.error('Fehler beim Löschen der Review', e)
+    deleteError.value = 'Bewertung konnte nicht gelöscht werden.'
+  } finally {
+    deletingId.value = null
   }
 }
 
@@ -218,6 +251,10 @@ watch(isAuthenticated, async (val) => {
     <!-- Loading -->
     <div v-if="loading" class="text-muted">Lade Bewertungen...</div>
 
+    <div v-else-if="deleteError" class="alert alert-danger py-2">
+      {{ deleteError }}
+    </div>
+
     <!-- Keine Bewertungen -->
     <div v-else-if="reviews.length === 0" class="text-muted fst-italic">
       Noch keine Bewertungen für dieses Rezept. Sei der Erste!
@@ -225,34 +262,42 @@ watch(isAuthenticated, async (val) => {
 
     <!-- Liste der Bewertungen -->
     <div v-else class="review-list">
-      <div
-        v-for="review in reviews"
-        :key="review.id"
-        class="review-card mb-3 bg-light p-3 rounded-4"
-      >
-        <div class="d-flex align-items-center mb-2">
-          <!-- Avatar -->
-          <div class="avatar me-2 shadow-sm">
-            <img
-              :src="review.avatarUrl || defaultAvatarUrl"
-              alt="Profilbild"
-              class="avatar-img"
-            />
-          </div>
+      <div v-for="review in reviews" :key="review.id" class="review-card mb-3 bg-light p-3 rounded-4">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="d-flex align-items-center">
+            <!-- Avatar -->
+            <div class="avatar me-2 shadow-sm">
+              <img
+                :src="review.avatarUrl || defaultAvatarUrl"
+                alt="Profilbild"
+                class="avatar-img"
+              />
+            </div>
 
-          <div>
-            <h6 class="m-0 fw-bold text-dark">{{ review.userName }}</h6>
-            <div class="review-stars">
-              <span
-                v-for="s in starValues"
-                :key="s"
-                class="star"
-                :class="{ active: review.stars >= s }"
-              >
-                &#9733;
-              </span>
+            <div>
+              <h6 class="m-0 fw-bold text-dark">{{ review.userName }}</h6>
+              <div class="review-stars">
+                <span
+                  v-for="s in starValues"
+                  :key="s"
+                  class="star"
+                  :class="{ active: review.stars >= s }"
+                >
+                  &#9733;
+                </span>
+              </div>
             </div>
           </div>
+
+          <button
+            v-if="canDeleteReview(review)"
+            class="btn btn-outline-danger btn-sm pill"
+            type="button"
+            :disabled="deletingId === review.id"
+            @click="deleteReview(review.id)"
+          >
+            {{ deletingId === review.id ? 'Löschen...' : 'Löschen' }}
+          </button>
         </div>
 
         <p class="mb-0 text-secondary">{{ review.text }}</p>
@@ -336,5 +381,12 @@ watch(isAuthenticated, async (val) => {
 
 .star.active {
   color: #6b6a19;
+}
+
+/* Löschen Button wie in der Nutzerverwaltung */
+.btn-outline-danger:hover {
+  background-color: #fdecec !important;
+  border-color: #c94c4c !important;
+  color: #8a1f1f !important;
 }
 </style>
