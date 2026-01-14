@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
+import { ref, onMounted, computed, onBeforeUnmount, watch } from 'vue'
 import Button from './Button.vue'
 import { useBannerStore } from '@/stores/banner'
 import { getApiRoot } from '@/services/apiAuth'
@@ -219,6 +219,10 @@ function selectSort(value) {
   closeSortDropdown()
 }
 
+watch([searchQuery, selectedCategories, selectedSort], () => {
+  emitFilters()
+})
+
 // Reset-Button
 function resetFilter() {
   searchQuery.value = ''
@@ -228,9 +232,6 @@ function resetFilter() {
   emitFilters()
 }
 
-function applyFilters() {
-  emitFilters()
-}
 </script>
 
 <template>
@@ -299,54 +300,40 @@ function applyFilters() {
         </div>
       </div>
 
-            <!-- Sortieren -->
-      <div class="col-md-2">
+      <!-- Sortieren + Reset -->
+      <div class="col-md-4">
         <label class="form-label small text-muted fw-bold">Sortieren</label>
-        <div class="sort-dropdown">
-          <button
-            class="form-control rounded-pill px-3 bg-light border-0 filter-input sort-toggle"
-            type="button"
-            @click.stop="toggleSortDropdown"
-          >
-            {{ selectedSortLabel }}
-          </button>
-
-          <div v-if="sortDropdownOpen" class="sort-menu shadow-sm">
+        <div class="sort-row">
+          <div class="sort-dropdown flex-grow-1">
             <button
-              v-for="opt in sortOptions"
-              :key="opt.value"
+              class="form-control rounded-pill px-3 bg-light border-0 filter-input sort-toggle"
               type="button"
-              class="sort-item"
-              @click="selectSort(opt.value)"
+              @click.stop="toggleSortDropdown"
             >
-              {{ opt.label }}
+              {{ selectedSortLabel }}
             </button>
+
+            <div v-if="sortDropdownOpen" class="sort-menu shadow-sm">
+              <button
+                v-for="opt in sortOptions"
+                :key="opt.value"
+                type="button"
+                class="sort-item"
+                @click="selectSort(opt.value)"
+              >
+                {{ opt.label }}
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
-      <div class="col-md-2 d-flex flex-column gap-2">
-        <div class="reset-wrap align-self-end">
           <Button
             variant="secondary"
-            class="btn-sm reset-icon-only"
+            class="reset-button"
             @click="resetFilter"
             aria-label="Filter zuruecksetzen"
           >
-            &#x21BA;
+            Reset &#x21BA;
           </Button>
         </div>
-        <Button
-          variant="accent"
-          class="w-100 btn-sm py-2 search-button"
-          @click="applyFilters"
-        >
-          <span class="search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" role="presentation" focusable="false">
-              <path d="M10 2a8 8 0 0 1 6.32 12.9l4.39 4.38a1 1 0 1 1-1.42 1.42l-4.38-4.39A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12a6 6 0 0 0 0-12z"/>
-            </svg>
-          </span>
-          <span>Suchen</span>
-        </Button>
       </div>
     </div>
   </div>
@@ -367,6 +354,7 @@ function applyFilters() {
 .filter-input {
   height: 38px;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
+  background: #f6f6f6 !important;
 }
 
 .filter-input:focus,
@@ -525,37 +513,24 @@ function applyFilters() {
   background: #edeedc;
 }
 
-.search-button {
+.sort-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  gap: 30px;
 }
 
-.search-icon {
-  width: 16px;
-  height: 16px;
-  display: inline-flex;
-}
-
-.search-icon svg {
-  width: 16px;
-  height: 16px;
-  fill: #fff;
-}
-
-.reset-wrap {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.reset-icon-only {
-  padding: 8px;
+.reset-button {
+  height: 38px;
+  padding: 0 14px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
+  white-space: nowrap;
+  background: #f6f6f6 !important;
+  border: 0 !important;
+  color: #2e3322 !important;
 }
 
 

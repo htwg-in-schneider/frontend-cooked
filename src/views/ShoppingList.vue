@@ -129,7 +129,7 @@ onMounted(loadData)
 
       <div v-else class="d-flex flex-column gap-4">
         <div v-for="group in grouped" :key="group.product.id" class="recipe-block">
-          <div class="d-flex justify-content-between align-items-center mb-2">
+          <div class="d-flex justify-content-between align-items-center mb-2 recipe-head">
             <h4 class="fw-bold mb-0">{{ group.product.title }}</h4>
             <div class="d-flex align-items-center gap-2">
               <span class="text-muted small">
@@ -234,5 +234,21 @@ onMounted(loadData)
 
 .shopping-check:focus {
   box-shadow: 0 0 0 0.2rem rgba(107, 106, 25, 0.15);
+}
+
+@media (max-width: 768px) {
+  .recipe-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .list-item {
+    font-size: 0.9rem;
+  }
+
+  .amount {
+    font-size: 0.9rem;
+  }
 }
 </style>

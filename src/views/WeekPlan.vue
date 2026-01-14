@@ -130,51 +130,53 @@ onMounted(loadPlan)
       <div v-if="loading" class="text-muted">Lade Wochenplan...</div>
       <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
 
-      <div v-else class="plan-grid">
-        <div class="plan-grid-head">
-          <div v-for="day in weekdays" :key="day.code" class="plan-head-cell">
-            {{ day.label }}
-          </div>
-        </div>
-        <div class="plan-grid-body">
-          <div
-            v-for="day in weekdays"
-            :key="day.code"
-            class="plan-cell"
-            @dragover="onDragOver"
-            @drop="onDrop(day.code)"
-          >
-            <div v-if="grouped[day.code].length === 0" class="text-muted small">
-              Kein Eintrag
+      <div v-else class="plan-scroll">
+        <div class="plan-grid">
+          <div class="plan-grid-head">
+            <div v-for="day in weekdays" :key="day.code" class="plan-head-cell">
+              {{ day.label }}
             </div>
-            <div v-else class="d-flex flex-column gap-2">
-              <div
-                v-for="entry in grouped[day.code]"
-                :key="entry.id"
-                class="plan-entry"
-                :class="{ 'is-dragging': dragId === entry.id }"
-                draggable="true"
-                @dragstart="onDragStart(entry, $event)"
-                @dragend="onDragEnd"
-              >
-                <button
-                  class="plan-title"
-                  type="button"
-                  @click="router.push({ name: 'product-detail', params: { id: entry.product?.id } })"
+          </div>
+          <div class="plan-grid-body">
+            <div
+              v-for="day in weekdays"
+              :key="day.code"
+              class="plan-cell"
+              @dragover="onDragOver"
+              @drop="onDrop(day.code)"
+            >
+              <div v-if="grouped[day.code].length === 0" class="text-muted small">
+                Kein Eintrag
+              </div>
+              <div v-else class="d-flex flex-column gap-2">
+                <div
+                  v-for="entry in grouped[day.code]"
+                  :key="entry.id"
+                  class="plan-entry"
+                  :class="{ 'is-dragging': dragId === entry.id }"
+                  draggable="true"
+                  @dragstart="onDragStart(entry, $event)"
+                  @dragend="onDragEnd"
                 >
-                  {{ entry.product?.title }}
-                </button>
-                    <div class="d-flex align-items-center gap-2 mt-2">
-                      <label class="small text-muted">Portionen</label>
-                      <input
-                        type="number"
-                        inputmode="numeric"
-                        pattern="[0-9]*"
-                        class="form-control form-control-sm rounded-pill servings-input no-spin"
-                        min="1"
-                        :value="entry.servings || entry.product?.servings || 1"
-                        @change="updateServings(entry, $event.target.value)"
-                      />
+                  <button
+                    class="plan-title"
+                    type="button"
+                    @click="router.push({ name: 'product-detail', params: { id: entry.product?.id } })"
+                  >
+                    {{ entry.product?.title }}
+                  </button>
+                      <div class="d-flex align-items-center gap-2 mt-2">
+                        <label class="small text-muted">Portionen</label>
+                        <input
+                          type="number"
+                          inputmode="numeric"
+                          pattern="[0-9]*"
+                          class="form-control form-control-sm rounded-pill servings-input no-spin"
+                          min="1"
+                          :value="entry.servings || entry.product?.servings || 1"
+                          @change="updateServings(entry, $event.target.value)"
+                        />
+                  </div>
                 </div>
               </div>
             </div>
@@ -240,6 +242,11 @@ onMounted(loadPlan)
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.plan-scroll {
+  overflow-x: auto;
+  padding-bottom: 6px;
 }
 
 .plan-grid-head,
@@ -341,6 +348,9 @@ onMounted(loadPlan)
 }
 
 @media (max-width: 1200px) {
+  .plan-grid {
+    min-width: 980px;
+  }
   .plan-card {
     padding: 20px;
   }
