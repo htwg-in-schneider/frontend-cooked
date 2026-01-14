@@ -17,21 +17,6 @@ import lucasImg from '@/assets/ÜberUnsBilder/lucas.webp'
 
       <div class="divider"></div>
 
-      <!-- Warum Cooked -->
-      <section class="about-section">
-        <h2 class="section-title">Warum Cooked?</h2>
-        <p class="about-p">
-          Die Idee zu Cooked ist während unseres Studiums der Wirtschaftsinformatik an der HTWG Konstanz entstanden.
-          Rezepte waren bei uns oft an vielen verschiedenen Orten gespeichert und dadurch schnell unübersichtlich.
-        </p>
-        <p class="about-p mb-0">
-          Cooked soll dabei helfen, Rezepte einfach zu sammeln, übersichtlich zu organisieren
-          und im Alltag schnell wiederzufinden.
-        </p>
-      </section>
-
-      <div class="divider"></div>
-
       <!-- Wer wir sind -->
       <section class="about-section">
         <h2 class="section-title text-center mb-5">Wer wir sind</h2>
@@ -73,6 +58,20 @@ import lucasImg from '@/assets/ÜberUnsBilder/lucas.webp'
               </div>
             </div>
           </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="about-subsection text-center">
+          <h3 class="section-subtitle">Warum Cooked?</h3>
+          <p class="about-p">
+            Die Idee zu Cooked ist während unseres Studiums der Wirtschaftsinformatik an der HTWG Konstanz entstanden.
+            Rezepte waren bei uns oft an vielen verschiedenen Orten gespeichert und dadurch schnell unübersichtlich.
+          </p>
+          <p class="about-p mb-0">
+            Cooked soll dabei helfen, Rezepte einfach zu sammeln, übersichtlich zu organisieren
+            und im Alltag schnell wiederzufinden.
+          </p>
         </div>
       </section>
 
@@ -116,6 +115,11 @@ import lucasImg from '@/assets/ÜberUnsBilder/lucas.webp'
 .section-title {
   font-weight: 600;
   margin-bottom: 18px;
+}
+
+.section-subtitle {
+  font-weight: 600;
+  margin-bottom: 10px;
 }
 
 .about-p {
