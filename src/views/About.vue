@@ -1,6 +1,6 @@
 <script setup>
-import melinaImg from '@/assets/ÜberUnsBilder/melina.jpg'
-import lucasImg from '@/assets/ÜberUnsBilder/lucas.jpg'
+import melinaImg from '@/assets/ÜberUnsBilder/melina.webp'
+import lucasImg from '@/assets/ÜberUnsBilder/lucas.webp'
 </script>
 
 <template>

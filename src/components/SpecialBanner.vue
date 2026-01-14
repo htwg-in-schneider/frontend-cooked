@@ -49,7 +49,16 @@ async function handleCtaClick() {
         </div>
 
         <div class="hero-media">
-          <img class="hero-photo" src="@/assets/Bild_homepage.webp" alt="Bild Homepage" />
+          <img
+            class="hero-photo"
+            src="@/assets/Bild_homepage.webp"
+            alt="Bild Homepage"
+            width="900"
+            height="900"
+            loading="eager"
+            decoding="async"
+            fetchpriority="high"
+          />
         </div>
       </div>
     </div>
@@ -146,6 +155,8 @@ async function handleCtaClick() {
   height: auto;
   border-radius: 50%;
   object-fit: cover;
+  display: block;
+  aspect-ratio: 1 / 1;
   
 
   margin-right: -20%; 
@@ -153,7 +164,7 @@ async function handleCtaClick() {
   
   /* Starker Schatten für 3D-Effekt */
   box-shadow: -15px 15px 40px rgba(0,0,0,0.2);
-  border: 8px solid rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.25);
 }
 
 /* --- Mobile Anpassung --- */

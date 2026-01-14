@@ -1,21 +1,45 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, watch, nextTick } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import SpecialBanner from '@/components/SpecialBanner.vue'
+import ContactForm from '@/components/ContactForm.vue'
 import ProductCard from '@/components/ProductCard.vue'
 import ProductFilter from '@/components/ProductFilter.vue'
 import Button from '@/components/Button.vue'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
 import { getApiCollection, getApiRoot } from '@/services/apiAuth'
+import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
+import { resolveImageUrl } from '@/services/imageService'
 
 const router = useRouter()
+const route = useRoute()
 const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
 const products = ref([])
 const loading = ref(true)
 const error = ref(null)
 const activeSort = ref('published')
 const favoriteIds = ref(new Set())
+
+const cuisineCodes = new Set([
+  'ITALIAN',
+  'FRENCH',
+  'ASIAN',
+  'AMERICAN',
+  'GERMAN',
+  'MEDITERRANEAN',
+  'MEXICAN',
+  'INDIAN',
+  'MIDDLE_EASTERN',
+  'THAI',
+  'CHINESE',
+  'JAPANESE',
+  'SPANISH'
+])
+
+function isCuisine(code) {
+  return cuisineCodes.has(code)
+}
 
 // Die Haupt-Funktion zum Laden der Produkte
 async function fetchProducts(filters = {}) {
@@ -24,14 +48,16 @@ async function fetchProducts(filters = {}) {
   if (filters.sortBy) {
     activeSort.value = filters.sortBy
   }
-  
+
   try {
+    const categoryMap = await loadCategoryMap()
+
     // 1. Basis-URL aus der .env Datei laden (z.B. http://localhost:8081/api/product)
     const baseUrl = getApiCollection()
-    
+
     // Wir nutzen URLSearchParams, um die URL sauber zusammenzubauen
     const url = new URL(baseUrl)
-    
+
     // 2. Parameter für dein Spring Boot Backend setzen
     if (filters.name) {
       url.searchParams.append('name', filters.name)
@@ -41,7 +67,7 @@ async function fetchProducts(filters = {}) {
     // 3. Daten abrufen
     const res = await fetch(url.toString())
     if (!res.ok) throw new Error('Fehler beim Laden')
-    
+
     const data = await res.json()
 
     const apiRoot = getApiRoot()
@@ -64,7 +90,7 @@ async function fetchProducts(filters = {}) {
           // ignore rating errors
         }
 
-        const categories = Array.isArray(recipe.categories)
+        const categoryCodes = Array.isArray(recipe.categories)
           ? recipe.categories
           : recipe.category
             ? [recipe.category]
@@ -73,10 +99,11 @@ async function fetchProducts(filters = {}) {
         return {
           id: recipe.id,
           title: recipe.title,
-          categories,
+          categories: mapCategoryLabels(categoryCodes, categoryMap),
+          categoryCodes,
           time: recipe.prepTimeMinutes + ' min',
           durationMinutes: Number(recipe.prepTimeMinutes) || 0,
-          image: recipe.imageUrl,
+          image: resolveImageUrl(recipe.imageUrl),
           description: recipe.description,
           ratingAvg,
           ratingCount
@@ -84,10 +111,17 @@ async function fetchProducts(filters = {}) {
       })
     )
 
-    const filtered = selectedCategories.length
+    const selectedCuisine = selectedCategories.filter(isCuisine)
+    const selectedTags = selectedCategories.filter((c) => !isCuisine(c))
+    const hasCuisine = selectedCuisine.length > 0
+    const hasTags = selectedTags.length > 0
+
+    const filtered = hasCuisine || hasTags
       ? enriched.filter((item) => {
-          const cats = Array.isArray(item.categories) ? item.categories : []
-          return selectedCategories.every((c) => cats.includes(c))
+          const cats = Array.isArray(item.categoryCodes) ? item.categoryCodes : []
+          const cuisineMatch = !hasCuisine || selectedCuisine.some((c) => cats.includes(c))
+          const tagMatch = !hasTags || selectedTags.some((c) => cats.includes(c))
+          return cuisineMatch && tagMatch
         })
       : enriched
 
@@ -143,6 +177,14 @@ function goToDetail(product) {
   router.push({ name: 'product-detail', params: { id: product.id } })
 }
 
+function scrollToHash(hash) {
+  if (!hash) return
+  const el = document.querySelector(hash)
+  if (!el) return
+  const y = el.getBoundingClientRect().top + window.pageYOffset - 80
+  window.scrollTo({ top: y, behavior: 'auto' })
+}
+
 async function loadFavorites() {
   if (!isAuthenticated.value) {
     favoriteIds.value = new Set()
@@ -177,6 +219,26 @@ async function toggleFavorite(product) {
 watch(isAuthenticated, () => {
   loadFavorites()
 })
+
+watch(
+  () => loading.value,
+  async (isLoading) => {
+    if (!isLoading && route.hash) {
+      await nextTick()
+      scrollToHash(route.hash)
+    }
+  }
+)
+
+watch(
+  () => route.hash,
+  async (hash) => {
+    if (hash && !loading.value) {
+      await nextTick()
+      scrollToHash(hash)
+    }
+  }
+)
 </script>
 
 <template>
@@ -211,16 +273,15 @@ watch(isAuthenticated, () => {
 
       <div v-else-if="products.length === 0" class="text-center py-5 text-muted">
         <p class="fs-4">Keine Rezepte gefunden.</p>
-        <button class="btn btn-link" @click="fetchProducts()">Alle anzeigen</button>
       </div>
 
       <div v-else class="row g-4">
-        <div 
-          class="col-12 col-md-6 col-lg-4" 
-          v-for="product in products" 
+        <div
+          class="col-12 col-md-6 col-lg-4"
+          v-for="product in products"
           :key="product.id"
         >
-          <ProductCard 
+          <ProductCard
             :product="product"
             :is-favorite="favoriteIds.has(product.id)"
             :can-favorite="isAuthenticated"
@@ -229,6 +290,16 @@ watch(isAuthenticated, () => {
           />
         </div>
       </div>
+    </section>
+
+    <section id="kontakt" class="py-5">
+      <div class="text-center mb-4">
+        <h2 class="display-6 fw-bold text-dark mb-2">Kontakt</h2>
+        <p class="text-muted mb-0">
+          Fragen, Feedback oder Ideen? Schreib uns direkt.
+        </p>
+      </div>
+      <ContactForm />
     </section>
   </main>
 </template>

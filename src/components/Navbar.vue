@@ -1,18 +1,49 @@
 <script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function waitForEl(selector, timeoutMs = 2000) {
+  return new Promise((resolve) => {
+    const start = performance.now()
+    const tick = () => {
+      const el = document.querySelector(selector)
+      if (el) return resolve(el)
+      if (performance.now() - start > timeoutMs) return resolve(null)
+      requestAnimationFrame(tick)
+    }
+    tick()
+  })
+}
+
+async function scrollToHash(hash) {
+  const targetHash = hash.startsWith('#') ? hash : `#${hash}`
+
+  if (router.currentRoute.value.path !== '/' || router.currentRoute.value.hash !== targetHash) {
+    await router.push({ path: '/', hash: targetHash })
+  }
+
+  const el = await waitForEl(targetHash, 3000)
+  if (el) {
+    const y = el.getBoundingClientRect().top + window.pageYOffset - 80
+    window.scrollTo({ top: y, behavior: 'auto' })
+  }
+}
 </script>
 
 <template>
   <nav class="navbar navbar-expand-lg">
     <div class="container-fluid px-5 d-flex align-items-center justify-content-between">
         <router-link to="/">
-          <img class="brand-logo" src="@/assets/logo.png" alt="Cooked Logo" />
+          <img class="brand-logo" src="@/assets/Logo.webp" alt="Cooked Logo" />
         </router-link>
         
         <div class="d-flex flex-wrap gap-2 ms-auto">
           <router-link to="/" class="button" exact-active-class="active">
-  Home
-</router-link>
-          <router-link :to="{ path: '/', hash: '#recipes' }" class="button"> Kategorien </router-link>
+            Home
+          </router-link>
+          <button class="button" type="button" @click="scrollToHash('#recipes')">Kategorien</button>
+          <button class="button" type="button" @click="scrollToHash('#kontakt')">Kontakt</button>
 
           <router-link to="/about" class="button" active-class="active">Über uns</router-link>
 
@@ -43,6 +74,8 @@
 
 .button {
   text-decoration: none;
+  background: transparent;
+  border: 0;
   color: white;
   font-weight: 500;
   padding: 8px 20px;

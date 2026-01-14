@@ -19,6 +19,7 @@ const saving = ref(false)
 const editMode = ref(false)
 
 const nameInput = ref('')
+const emailInput = ref('')
 const avatarInput = ref('')
 const bioInput = ref('')
 
@@ -66,6 +67,7 @@ async function ensureMeLoaded() {
 
 function fillInputsFromStore() {
   nameInput.value = authStore.me?.name || user.value?.name || ''
+  emailInput.value = authStore.me?.email || user.value?.email || ''
   avatarInput.value = authStore.me?.avatarUrl || user.value?.picture || ''
   bioInput.value = authStore.me?.bio || ''
 }
@@ -89,6 +91,12 @@ function cancelEdit() {
 
 async function saveProfile() {
   if (!isAuthenticated.value) return
+  const msg = validateProfile()
+  if (msg) {
+    error.value = msg
+    return
+  }
+
   saving.value = true
   errorProfile.value = ''
 

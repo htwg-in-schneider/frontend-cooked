@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cooked</title>
+    <script>
+      (function () {
+        var l = window.location;
+        var base = "/frontend-cooked/";
+        var path = l.pathname.startsWith(base) ? l.pathname.slice(base.length) : "";
+        var search = l.search.replace(/^\?/, "");
+        var target = base + "?/" + path;
+        if (search) {
+          target += "&" + search;
+        }
+        if (l.hash) {
+          target += l.hash;
+        }
+        l.replace(target);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

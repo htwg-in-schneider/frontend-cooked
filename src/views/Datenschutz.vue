@@ -1,3 +1,7 @@
+<script setup>
+const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || ''
+</script>
+
 <template>
   <div class="container py-5">
     <div class="bg-white shadow-sm p-4 p-md-5 mx-auto legal-card">
@@ -8,8 +12,8 @@
         Verantwortlich für diese Webanwendung ist das Studienprojekt
         <strong>Cooked</strong> der Hochschule Konstanz (HTWG), Fakultät Informatik.
       </p>
-      <p>
-        Kontakt: maiermelina04@gmail.com
+      <p v-if="contactEmail">
+        Kontakt: {{ contactEmail }}
       </p>
 
       <h2 class="h5 fw-bold mt-4">2. Verarbeitung personenbezogener Daten</h2>

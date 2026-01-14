@@ -8,6 +8,8 @@ import { authFetch, getApiCollection } from '@/services/apiAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
+import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
+import { resolveImageUrl } from '@/services/imageService'
 
 const route = useRoute()
 const router = useRouter()
@@ -49,18 +51,21 @@ async function loadProduct() {
       ? data.steps
       : descriptionToSteps(data.description)
     const ingredients = Array.isArray(data.ingredients) ? data.ingredients : []
-    const categories = Array.isArray(data.categories)
+    const categoryCodes = Array.isArray(data.categories)
       ? data.categories
       : data.category
         ? [data.category]
         : []
 
+    const categoryMap = await loadCategoryMap()
+
     product.value = {
       id: data.id,
       title: data.title,
-      categories,
+      categories: mapCategoryLabels(categoryCodes, categoryMap),
+      categoryCodes,
       time: data.prepTimeMinutes + ' min',
-      image: data.imageUrl,
+      image: resolveImageUrl(data.imageUrl),
       description: data.description,
       ingredients,
       steps,
@@ -194,8 +199,7 @@ const canManage = computed(() => {
             <h5 class="mb-3">Zutaten</h5>
             <ul v-if="product.ingredients && product.ingredients.length" class="ingredient-list">
               <li v-for="(ing, idx) in product.ingredients" :key="idx">
-                <span v-if="ing.amount" class="fw-semibold">{{ ing.amount }}</span>
-                <span v-if="ing.amount"> </span>
+                <span v-if="ing.amount" class="fw-semibold ingredient-amount">{{ ing.amount }}</span>
                 <span>{{ ing.name }}</span>
               </li>
             </ul>
@@ -238,7 +242,7 @@ const canManage = computed(() => {
           </div>
 
           <div class="mt-auto">
-<div v-if="canManage" class="mt-4 pt-4 border-top">
+            <div v-if="canManage" class="mt-4 pt-4 border-top">
               <p class="text-muted small mb-2">Rezept verwalten</p>
 
               <div class="d-flex flex-column gap-2">
@@ -255,7 +259,7 @@ const canManage = computed(() => {
                   @click="deleteRecipe"
                   :disabled="deleting"
                 >
-                  <span v-if="deleting">Wird entfernt…</span>
+                  <span v-if="deleting">Wird entfernt.</span>
                   <span v-else>Rezept entfernen</span>
                 </button>
 
@@ -299,6 +303,10 @@ const canManage = computed(() => {
   color: #555;
 }
 
+.ingredient-amount {
+  margin-right: 6px;
+}
+
 .steps {
   display: flex;
   flex-direction: column;
@@ -312,7 +320,7 @@ const canManage = computed(() => {
   background: #fafaf3;
 }
 
-/* SCHLICHTER DELETE BUTTON – COOKED STYLE */
+/* SCHLICHTER DELETE BUTTON - COOKED STYLE */
 .delete-soft-btn {
   background-color: transparent;
   border: 1px solid rgba(107, 106, 25, 0.4);
