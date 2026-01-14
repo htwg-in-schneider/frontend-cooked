@@ -37,9 +37,55 @@ const displayName = computed(() => {
   return authStore.me?.name || user.value?.name || user.value?.email || 'Profil'
 })
 
+/**
+ * ✅ Graues Default-Profilicon (als Data-URI SVG, stabil + ohne externe Links)
+ */
+const defaultAvatar =
+  'data:image/svg+xml;charset=UTF-8,' +
+  encodeURIComponent(`<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <rect width="256" height="256" rx="128" fill="#E9ECEF"/>
+  <circle cx="128" cy="104" r="44" fill="#ADB5BD"/>
+  <path d="M52 220c10-44 46-68 76-68s66 24 76 68" fill="#ADB5BD"/>
+</svg>`)
+
+/**
+ * ✅ Auth0/Gravatar "Default"-Bilder erkennen (die bunten Initialen/Identicons)
+ * -> Wenn das nur so ein generierter Avatar ist, behandeln wir es als "kein Avatar"
+ */
+function isGeneratedDefaultAvatar(url) {
+  if (!url) return true
+  const u = String(url).trim()
+  if (!u) return true
+
+  // Auth0 Default Avatare (bunte Initialen)
+  if (u.includes('cdn.auth0.com/avatars/')) return true
+
+  // Gravatar Default Styles (identicon/retro/monsterid/wavatar etc.)
+  const lower = u.toLowerCase()
+  if (lower.includes('gravatar.com/avatar')) {
+    if (
+      lower.includes('d=identicon') ||
+      lower.includes('d=retro') ||
+      lower.includes('d=monsterid') ||
+      lower.includes('d=wavatar') ||
+      lower.includes('d=robohash')
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
 const displayAvatar = computed(() => {
-  return authStore.me?.avatarUrl || user.value?.picture || ''
+  const saved = (authStore.me?.avatarUrl || '').trim()
+  if (!saved) return defaultAvatar
+  return saved
 })
+
+
+const isPlaceholderAvatar = computed(() => displayAvatar.value === defaultAvatar)
 
 const displayBio = computed(() => {
   return (authStore.me?.bio || '').toString().trim()
@@ -250,7 +296,6 @@ onMounted(async () => {
           ]"
         >
           <div class="d-flex justify-content-end gap-2 flex-wrap profile-actions">
-            <!-- ✅ nur Farbe geändert (grün statt grau) -->
             <button class="btn btn-outline-secondary pill btn-olive-outline" type="button" @click="startEdit">
               Bearbeiten
             </button>
@@ -261,8 +306,12 @@ onMounted(async () => {
 
           <div class="avatar-wrap">
             <div class="avatar-frame">
-              <img v-if="displayAvatar" :src="displayAvatar" alt="Profilbild" class="avatar-img" />
-              <div v-else class="avatar-placeholder">?</div>
+              <!-- ✅ Immer ein Bild: eigenes Avatar oder grauer Standard -->
+              <img
+                :src="displayAvatar"
+                alt="Profilbild"
+                :class="['avatar-img', { 'avatar-img--placeholder': isPlaceholderAvatar }]"
+              />
             </div>
           </div>
 
@@ -323,22 +372,19 @@ onMounted(async () => {
 
           <hr class="my-4" />
 
+          <!-- Buttons -->
           <div class="profile-cta">
+            <router-link to="/week-plan" class="text-decoration-none">
+              <button class="cta-btn cta-secondary" type="button">Mein Wochenplan</button>
+            </router-link>
+
             <router-link to="/favorites" class="text-decoration-none">
               <button class="cta-btn cta-favs" type="button">Favoriten</button>
             </router-link>
 
-        <router-link to="/week-plan" class="text-decoration-none">
-          <button class="cta-btn cta-secondary" type="button">
-            Mein Wochenplan
-          </button>
-        </router-link>
-
-        <router-link to="/shopping-list" class="text-decoration-none">
-          <button class="cta-btn cta-secondary" type="button">
-            Einkaufsliste
-          </button>
-        </router-link>
+            <router-link to="/shopping-list" class="text-decoration-none">
+              <button class="cta-btn cta-secondary" type="button">Einkaufsliste</button>
+            </router-link>
 
             <router-link to="/create" class="text-decoration-none">
               <button class="cta-btn cta-create" type="button">+ Neues Rezept erstellen</button>
@@ -348,7 +394,6 @@ onMounted(async () => {
 
         <!-- ADMIN -->
         <div v-if="isAdmin" class="admin-card bg-white p-5 shadow-sm">
-          <!-- ✅ Überschrift mittig -->
           <h3 class="fw-bold mb-3 admin-title">Admin Dashboard</h3>
 
           <div class="d-grid gap-3">
@@ -364,12 +409,11 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Meine Rezepte unter dem Kasten -->
+    <!-- Meine Rezepte -->
     <div class="mt-5">
       <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <h3 class="fw-bold mb-0">Meine Rezepte</h3>
 
-        <!-- ✅ nur Farbe geändert (grün statt grau) -->
         <router-link to="/my-recipes" class="btn btn-outline-secondary pill btn-olive-outline">
           Alle anzeigen
         </router-link>
@@ -445,7 +489,9 @@ onMounted(async () => {
   height: fit-content;
 }
 
-.pill { border-radius: 999px; }
+.pill {
+  border-radius: 999px;
+}
 
 .profile-actions {
   position: absolute;
@@ -478,13 +524,21 @@ onMounted(async () => {
   object-fit: cover;
 }
 
-.avatar-placeholder {
-  font-weight: 700;
-  color: #8b8b5a;
-  font-size: 1.8rem;
+.avatar-img--placeholder {
+  object-fit: cover;
+  padding: 0;
+  background: #e9ecef;
+
+  /* Zoom + nach unten schieben */
+  transform: scale(1.28) translateY(6px);
+  transform-origin: center;
 }
 
-.name-title { line-height: 1.1; }
+
+
+.name-title {
+  line-height: 1.1;
+}
 
 .bio-text {
   max-width: 650px;
@@ -492,7 +546,9 @@ onMounted(async () => {
   line-height: 1.55;
 }
 
-.bio-empty { opacity: 0.9; }
+.bio-empty {
+  opacity: 0.9;
+}
 
 /* CTA Buttons (unverändert) */
 .profile-cta {
@@ -540,8 +596,6 @@ onMounted(async () => {
   transform: translateY(-1px);
 }
 
-
-/* Neues Rezept: Olive wie euer Active Button */
 .cta-create {
   background: #6b6a19;
   color: #fff;
@@ -555,7 +609,7 @@ onMounted(async () => {
 
 /* Admin Buttons (unverändert) */
 .admin-title {
-  text-align: center; /* ✅ Überschrift mittig */
+  text-align: center;
 }
 
 .admin-link {
@@ -585,7 +639,7 @@ onMounted(async () => {
   transform: translateY(-1px);
 }
 
-/* ✅ NEU: Olive Outline für Bearbeiten/Logout/Alle anzeigen (nur Farbe & Hover) */
+/* Olive Outline */
 .btn-olive-outline {
   border-color: #6b6a19 !important;
   color: #6b6a19 !important;
@@ -605,12 +659,20 @@ onMounted(async () => {
 
 /* Responsive */
 @media (max-width: 992px) {
-  .profile-shell--admin { max-width: none; }
-  .profile-layout--admin { grid-template-columns: 1fr; }
-  .profile-card { max-width: 1000px; }
+  .profile-shell--admin {
+    max-width: none;
+  }
+  .profile-layout--admin {
+    grid-template-columns: 1fr;
+  }
+  .profile-card {
+    max-width: 1000px;
+  }
 }
 
 @media (max-width: 768px) {
-  .profile-cta { grid-template-columns: 1fr; }
+  .profile-cta {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
