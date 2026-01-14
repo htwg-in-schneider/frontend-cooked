@@ -13,6 +13,8 @@ import Datenschutz from '../views/Datenschutz.vue'
 import AdminUsers from '../views/AdminUsers.vue'
 import AdminTransactions from '../views/AdminTransactions.vue'
 import About from '../views/About.vue'
+import WeekPlan from '../views/WeekPlan.vue'
+import ShoppingList from '../views/ShoppingList.vue'
 
 
 const router = createRouter({
@@ -27,6 +29,8 @@ const router = createRouter({
     { path: '/my-recipes', name: 'my-recipes', component: MyRecipes, meta: { requiresAuth: true } },
     { path: '/favorites', name: 'favorites', component: Favorites, meta: { requiresAuth: true } },
     { path: '/edit/:id', name: 'edit-product', component: EditProduct, meta: { requiresAuth: true } },
+    { path: '/week-plan', name: 'week-plan', component: WeekPlan, meta: { requiresAuth: true } },
+    { path: '/shopping-list', name: 'shopping-list', component: ShoppingList, meta: { requiresAuth: true } },
 
     // Profile muss Login erzwingen
     { path: '/profile', name: 'user-profile', component: UserProfile, meta: { requiresAuth: true } },

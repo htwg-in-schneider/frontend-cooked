@@ -2,6 +2,8 @@
 import { ref, onMounted, watch } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { authFetch, getApiRoot } from '@/services/apiAuth'
+import { useAuthStore } from '@/stores/authStore'
+import { loadMe } from '@/services/meService'
 
 const props = defineProps({
   productId: {
@@ -13,6 +15,7 @@ const props = defineProps({
 const reviews = ref([])
 const loading = ref(true)
 const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
+const authStore = useAuthStore()
 
 // Formular-States
 const userName = ref('')
@@ -60,7 +63,7 @@ async function submitReview() {
 
   // Frontend-Validierung (schnell & einfach)
   if (!userName.value.trim()) {
-    submitError.value = 'Bitte einen Namen eingeben.'
+    submitError.value = 'Kein Profilname gefunden.'
     return
   }
   const s = Number(stars.value)
@@ -107,7 +110,19 @@ async function submitReview() {
 }
 
 // Beim Start laden
-onMounted(fetchReviews)
+onMounted(async () => {
+  fetchReviews()
+  if (isAuthenticated.value) {
+    try {
+      if (!authStore.me) {
+        authStore.setMe(await loadMe(getAccessTokenSilently))
+      }
+      userName.value = authStore.me?.name || ''
+    } catch {
+      userName.value = authStore.me?.name || ''
+    }
+  }
+})
 
 // Falls sich die ID ändert, neu laden
 watch(
@@ -116,6 +131,21 @@ watch(
     fetchReviews()
   }
 )
+
+watch(isAuthenticated, async (val) => {
+  if (!val) {
+    userName.value = ''
+    return
+  }
+  try {
+    if (!authStore.me) {
+      authStore.setMe(await loadMe(getAccessTokenSilently))
+    }
+    userName.value = authStore.me?.name || ''
+  } catch {
+    userName.value = authStore.me?.name || ''
+  }
+})
 </script>
 
 <template>
@@ -138,10 +168,6 @@ watch(
         <div v-if="submitSuccess" class="alert alert-success py-2">{{ submitSuccess }}</div>
 
         <div class="row g-2">
-          <div class="col-12 col-md-5">
-            <input v-model="userName" class="form-control" type="text" placeholder="Dein Name" />
-          </div>
-
           <div class="col-12 col-md-3">
             <div class="star-input">
               <button

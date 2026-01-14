@@ -16,6 +16,7 @@ const form = ref({
   title: '',
   categories: [],
   prepTimeMinutes: '',
+  servings: '',
   image: '',
   ingredients: [{ name: '', amount: '' }],
   steps: [{ text: '' }]
@@ -25,6 +26,7 @@ const errors = ref({
   title: '',
   categories: '',
   prepTimeMinutes: '',
+  servings: '',
   ingredients: '',
   steps: '',
   general: ''
@@ -184,6 +186,7 @@ function validate() {
   const title = form.value.title.trim()
   const categories = Array.isArray(form.value.categories) ? form.value.categories : []
   const minutes = Number(form.value.prepTimeMinutes)
+  const servings = Number(form.value.servings)
 
   let ok = true
 
@@ -208,6 +211,17 @@ function validate() {
     ok = false
   } else if (minutes > 9999) {
     errors.value.prepTimeMinutes = 'Die Zubereitungszeit ist zu groß.'
+    ok = false
+  }
+
+  if (!form.value.servings || Number.isNaN(servings)) {
+    errors.value.servings = 'Bitte gib eine gültige Portionenanzahl ein.'
+    ok = false
+  } else if (servings <= 0) {
+    errors.value.servings = 'Die Portionenanzahl muss größer als 0 sein.'
+    ok = false
+  } else if (servings > 1000) {
+    errors.value.servings = 'Die Portionenanzahl ist zu groß.'
     ok = false
   }
 
@@ -329,6 +343,7 @@ async function createProduct() {
       title: form.value.title.trim(),
       categories: (form.value.categories || []).filter(Boolean),
       prepTimeMinutes: Number(form.value.prepTimeMinutes),
+      servings: Number(form.value.servings),
       imageUrl: form.value.image.trim(),
       description,
       instructions: description,
@@ -435,7 +450,7 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Minuten -->
-          <div class="col-md-6">
+          <div class="col-md-3">
             <label class="form-label text-muted small">Zeit (Minuten)</label>
             <input
               v-model="form.prepTimeMinutes"
@@ -446,6 +461,21 @@ onBeforeUnmount(() => {
             />
             <div v-if="errors.prepTimeMinutes" class="text-danger small mt-1 ps-2">
               {{ errors.prepTimeMinutes }}
+            </div>
+          </div>
+
+          <!-- Portionen -->
+          <div class="col-md-3">
+            <label class="form-label text-muted small">Portionen</label>
+            <input
+              v-model="form.servings"
+              type="number"
+              class="form-control rounded-pill px-3"
+              placeholder="z.B. 2"
+              min="1"
+            />
+            <div v-if="errors.servings" class="text-danger small mt-1 ps-2">
+              {{ errors.servings }}
             </div>
           </div>
         </div>
