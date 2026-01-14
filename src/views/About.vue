@@ -146,7 +146,7 @@ import lucasImg from '@/assets/ÜberUnsBilder/lucas.webp'
   height: 100%;
   display: block;
   object-fit: cover;
-  object-position: center; Chicke
+  object-position: center;
 
   border-radius: inherit;
   -webkit-mask-image: -webkit-radial-gradient(white, black);
