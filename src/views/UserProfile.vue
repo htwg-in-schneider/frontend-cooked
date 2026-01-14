@@ -653,6 +653,21 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .profile-actions {
+    position: static;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  .avatar-wrap {
+    margin-top: 0;
+  }
+
+  .avatar-frame {
+    width: 130px;
+    height: 130px;
+  }
+
   .profile-cta {
     grid-template-columns: 1fr;
   }
