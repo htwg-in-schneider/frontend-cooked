@@ -296,14 +296,15 @@ async function addToPlan(dayCode) {
             <div class="d-flex flex-wrap align-items-center gap-3 mb-3 plan-control">
               <label class="form-label small text-muted mb-1">Wochenplan</label>
               <div class="plan-dropdown">
-                <button
-                  class="btn btn-outline-secondary rounded-pill px-3"
-                  type="button"
-                  @click="planOpen = !planOpen"
-                  :disabled="planLoading"
-                >
-                  Zum Wochenplan hinzufügen
-                </button>
+              <button
+                class="btn btn-outline-secondary pill btn-olive-outline px-4"
+                type="button"
+                @click="planOpen = !planOpen"
+               :disabled="planLoading"
+               >
+               Zum Wochenplan hinzufügen
+              </button>
+
                 <div v-if="planOpen" class="plan-menu shadow-sm">
                   <button
                     v-for="day in weekdays"
@@ -539,19 +540,26 @@ async function addToPlan(dayCode) {
 .plan-item:hover {
   background: #edeedc;
 }
-
-.plan-toast {
-  position: fixed;
-  left: 50%;
-  bottom: 22px;
-  transform: translateX(-50%);
-  background: #ffffff;
-  color: #2b2f33;
-  border: 1px solid rgba(107, 106, 25, 0.2);
-  border-radius: 14px;
-  padding: 10px 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-  font-size: 0.95rem;
-  z-index: 10;
+/* gleiche Button-Styles wie im Profil */
+.pill {
+  border-radius: 999px;
 }
+
+.btn-olive-outline {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: transparent !important;
+}
+
+.btn-olive-outline:hover,
+.btn-olive-outline:focus {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: rgba(107, 106, 25, 0.08) !important;
+}
+
+.btn-olive-outline:active {
+  background: rgba(107, 106, 25, 0.12) !important;
+}
+
 </style>

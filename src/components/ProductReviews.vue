@@ -160,7 +160,11 @@ watch(isAuthenticated, async (val) => {
 
       <div v-if="!isAuthenticated" class="alert alert-light border">
         Bitte anmelden, um zu bewerten.
-        <button class="btn btn-outline-secondary ms-2" type="button" @click="submitReview">
+        <button
+          class="btn btn-outline-secondary pill btn-olive-outline ms-2"
+          type="button"
+          @click="submitReview"
+        >
           Login
         </button>
       </div>
@@ -199,7 +203,7 @@ watch(isAuthenticated, async (val) => {
 
           <div class="col-12 d-flex justify-content-end">
             <button
-              class="btn btn-outline-secondary"
+              class="btn btn-outline-secondary pill btn-olive-outline px-4"
               type="button"
               @click="submitReview"
               :disabled="submitLoading"
@@ -258,6 +262,28 @@ watch(isAuthenticated, async (val) => {
 </template>
 
 <style scoped>
+/* gleiche Button-Styles wie im Profil */
+.pill {
+  border-radius: 999px;
+}
+
+.btn-olive-outline {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: transparent !important;
+}
+
+.btn-olive-outline:hover,
+.btn-olive-outline:focus {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: rgba(107, 106, 25, 0.08) !important;
+}
+
+.btn-olive-outline:active {
+  background: rgba(107, 106, 25, 0.12) !important;
+}
+
 .avatar {
   width: 40px;
   height: 40px;
