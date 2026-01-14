@@ -257,15 +257,27 @@ async function addToPlan(dayCode) {
             </div>
           </div>
 
-          <div class="mt-4">
-            <h5 class="mb-3">Zutaten</h5>
-            <ul v-if="scaledIngredients.length" class="ingredient-list">
-              <li v-for="(ing, idx) in scaledIngredients" :key="idx">
-                <span v-if="ing.amount" class="fw-semibold ingredient-amount">{{ ing.amount }}</span>
-                <span>{{ ing.name }}</span>
-              </li>
-            </ul>
-            <p v-else class="text-muted small mb-0">Keine Zutaten angegeben.</p>
+          <div class="mt-4 ingredients-row">
+            <div class="ingredients-col">
+              <h5 class="mb-3">Zutaten</h5>
+              <ul v-if="scaledIngredients.length" class="ingredient-list">
+                <li v-for="(ing, idx) in scaledIngredients" :key="idx">
+                  <span v-if="ing.amount" class="fw-semibold ingredient-amount">{{ ing.amount }}</span>
+                  <span>{{ ing.name }}</span>
+                </li>
+              </ul>
+              <p v-else class="text-muted small mb-0">Keine Zutaten angegeben.</p>
+            </div>
+
+            <div class="servings-control">
+              <label class="form-label small text-muted mb-0">Portionen</label>
+              <input
+                v-model.number="desiredServings"
+                type="number"
+                min="1"
+                class="form-control rounded-pill px-3 servings-input"
+              />
+            </div>
           </div>
         </div>
 
@@ -277,39 +289,27 @@ async function addToPlan(dayCode) {
               Zubereitung: <strong>{{ product.time }}</strong>
             </div>
 
-            <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
-              <div class="servings-control">
-                <label class="form-label small text-muted mb-1">Portionen</label>
-                <input
-                  v-model.number="desiredServings"
-                  type="number"
-                  min="1"
-                  class="form-control rounded-pill px-3 servings-input"
-                />
-              </div>
-
-              <div class="plan-control">
-                <label class="form-label small text-muted mb-1">Wochenplan</label>
-                <div class="plan-dropdown">
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-3 plan-control">
+              <label class="form-label small text-muted mb-1">Wochenplan</label>
+              <div class="plan-dropdown">
+                <button
+                  class="btn btn-outline-secondary rounded-pill px-3"
+                  type="button"
+                  @click="planOpen = !planOpen"
+                  :disabled="planLoading"
+                >
+                  Zum Wochenplan hinzufügen
+                </button>
+                <div v-if="planOpen" class="plan-menu shadow-sm">
                   <button
-                    class="btn btn-outline-secondary rounded-pill px-3"
+                    v-for="day in weekdays"
+                    :key="day.code"
+                    class="plan-item"
                     type="button"
-                    @click="planOpen = !planOpen"
-                    :disabled="planLoading"
+                    @click="addToPlan(day.code)"
                   >
-                    Zum Wochenplan hinzufügen
+                    {{ day.label }}
                   </button>
-                  <div v-if="planOpen" class="plan-menu shadow-sm">
-                    <button
-                      v-for="day in weekdays"
-                      :key="day.code"
-                      class="plan-item"
-                      type="button"
-                      @click="addToPlan(day.code)"
-                    >
-                      {{ day.label }}
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
@@ -323,7 +323,9 @@ async function addToPlan(dayCode) {
             <h5 class="mb-3">Zubereitung</h5>
             <div v-if="product.steps && product.steps.length" class="steps">
               <div v-for="(step, idx) in product.steps" :key="idx" class="step-item">
-                <div class="fw-semibold mb-1">Schritt {{ idx + 1 }}</div>
+                <div class="fw-semibold mb-1">
+                  {{ step.title?.trim() || `Schritt ${idx + 1}` }}
+                </div>
                 <div class="instructions-text mb-2">
                   {{ step.text }}
                 </div>
@@ -475,12 +477,27 @@ async function addToPlan(dayCode) {
   margin-top: 36px;
 }
 
+.ingredients-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.ingredients-col {
+  flex: 1;
+  min-width: 0;
+}
+
 .servings-control {
-  min-width: 160px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
 }
 
 .servings-input {
-  max-width: 140px;
+  max-width: 64px;
+  text-align: center;
 }
 
 .plan-dropdown {
