@@ -130,7 +130,7 @@ import lucasImg from '@/assets/ÜberUnsBilder/lucas.webp'
   align-items: flex-start;
 }
 
-/* ✅ Bild-Frame mit ruhiger Rundung */
+/* Bild-Frame mit ruhiger Rundung */
 .img-frame {
   width: 160px;
   height: 210px;

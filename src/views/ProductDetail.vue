@@ -10,6 +10,8 @@ import { loadMe } from '@/services/meService'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
 import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 import { resolveImageUrl } from '@/services/imageService'
+import { addMealPlanEntry } from '@/services/mealPlanService'
+import { scaleIngredientAmount } from '@/services/ingredientScale'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,6 +25,21 @@ const isFavorite = ref(false)
 
 const deleting = ref(false)
 const deleteError = ref('')
+const desiredServings = ref(1)
+const planOpen = ref(false)
+const planLoading = ref(false)
+const planError = ref('')
+const planSuccess = ref('')
+
+const weekdays = [
+  { code: 'MONDAY', label: 'Montag' },
+  { code: 'TUESDAY', label: 'Dienstag' },
+  { code: 'WEDNESDAY', label: 'Mittwoch' },
+  { code: 'THURSDAY', label: 'Donnerstag' },
+  { code: 'FRIDAY', label: 'Freitag' },
+  { code: 'SATURDAY', label: 'Samstag' },
+  { code: 'SUNDAY', label: 'Sonntag' }
+]
 
 function descriptionToSteps(description) {
   return (description || '')
@@ -65,12 +82,14 @@ async function loadProduct() {
       categories: mapCategoryLabels(categoryCodes, categoryMap),
       categoryCodes,
       time: data.prepTimeMinutes + ' min',
+      servings: data.servings ?? 1,
       image: resolveImageUrl(data.imageUrl),
       description: data.description,
       ingredients,
       steps,
       createdByEmail: data.createdByEmail || ''
     }
+    desiredServings.value = product.value.servings || 1
     await loadFavoriteStatus()
   } catch (e) {
     error.value = e.message
@@ -154,6 +173,41 @@ const canManage = computed(() => {
   const createdBy = product.value?.createdByEmail
   return !!email && !!createdBy && createdBy.toLowerCase() === email.toLowerCase()
 })
+
+const scaledIngredients = computed(() => {
+  if (!product.value) return []
+  const base = product.value.servings || 1
+  const factor = desiredServings.value / base
+  return (product.value.ingredients || []).map((ing) => ({
+    name: ing.name,
+    amount: scaleIngredientAmount(ing.amount, factor)
+  }))
+})
+
+async function addToPlan(dayCode) {
+  if (!product.value) return
+  if (!isAuthenticated.value) {
+    await loginWithRedirect({ appState: { target: router.currentRoute.value.fullPath } })
+    return
+  }
+  planLoading.value = true
+  planError.value = ''
+  planSuccess.value = ''
+  try {
+    await addMealPlanEntry(getAccessTokenSilently, {
+      productId: product.value.id,
+      weekday: dayCode,
+      servings: desiredServings.value
+    })
+    planOpen.value = false
+    const label = weekdays.find((d) => d.code === dayCode)?.label || 'Tag'
+    planSuccess.value = `Zum Wochenplan hinzugefügt (${label}).`
+  } catch (e) {
+    planError.value = e?.message || 'Konnte nicht speichern.'
+  } finally {
+    planLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -195,21 +249,8 @@ const canManage = computed(() => {
             class="img-fluid w-100 detail-image shadow-sm"
           />
 
-          <div class="mt-4">
-            <h5 class="mb-3">Zutaten</h5>
-            <ul v-if="product.ingredients && product.ingredients.length" class="ingredient-list">
-              <li v-for="(ing, idx) in product.ingredients" :key="idx">
-                <span v-if="ing.amount" class="fw-semibold ingredient-amount">{{ ing.amount }}</span>
-                <span>{{ ing.name }}</span>
-              </li>
-            </ul>
-            <p v-else class="text-muted small mb-0">Keine Zutaten angegeben.</p>
-          </div>
-        </div>
-
-        <div class="col-md-6 d-flex flex-column">
-          <div>
-            <div class="d-flex flex-wrap gap-2 mb-2">
+          <div v-if="product.categories && product.categories.length" class="mt-3">
+            <div class="d-flex flex-wrap gap-2">
               <span
                 v-for="cat in product.categories"
                 :key="cat"
@@ -218,11 +259,68 @@ const canManage = computed(() => {
                 {{ cat }}
               </span>
             </div>
+          </div>
 
-            <h1 class="fw-bold mb-2 text-dark">{{ product.title }}</h1>
+          <div class="mt-4 ingredients-row">
+            <div class="ingredients-col">
+              <h5 class="mb-3">Zutaten</h5>
+              <ul v-if="scaledIngredients.length" class="ingredient-list">
+                <li v-for="(ing, idx) in scaledIngredients" :key="idx">
+                  <span v-if="ing.amount" class="fw-semibold ingredient-amount">{{ ing.amount }}</span>
+                  <span>{{ ing.name }}</span>
+                </li>
+              </ul>
+              <p v-else class="text-muted small mb-0">Keine Zutaten angegeben.</p>
+            </div>
+
+            <div class="servings-control">
+              <label class="form-label small text-muted mb-0">Portionen</label>
+              <input
+                v-model.number="desiredServings"
+                type="number"
+                min="1"
+                class="form-control rounded-pill px-3 servings-input"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 d-flex flex-column">
+          <div>
+            <h1 class="fw-bold mb-2 text-dark title-offset">{{ product.title }}</h1>
 
             <div class="text-muted mb-4">
               Zubereitung: <strong>{{ product.time }}</strong>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-3 plan-control">
+              <label class="form-label small text-muted mb-1">Wochenplan</label>
+              <div class="plan-dropdown">
+              <button
+                class="btn btn-outline-secondary pill btn-olive-outline px-4"
+                type="button"
+                @click="planOpen = !planOpen"
+               :disabled="planLoading"
+               >
+               Zum Wochenplan hinzufügen
+              </button>
+
+                <div v-if="planOpen" class="plan-menu shadow-sm">
+                  <button
+                    v-for="day in weekdays"
+                    :key="day.code"
+                    class="plan-item"
+                    type="button"
+                    @click="addToPlan(day.code)"
+                  >
+                    {{ day.label }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="planError" class="text-danger small mb-2">
+              {{ planError }}
             </div>
           </div>
 
@@ -230,7 +328,9 @@ const canManage = computed(() => {
             <h5 class="mb-3">Zubereitung</h5>
             <div v-if="product.steps && product.steps.length" class="steps">
               <div v-for="(step, idx) in product.steps" :key="idx" class="step-item">
-                <div class="fw-semibold mb-1">Schritt {{ idx + 1 }}</div>
+                <div class="fw-semibold mb-1">
+                  {{ step.title?.trim() || `Schritt ${idx + 1}` }}
+                </div>
                 <div class="instructions-text mb-2">
                   {{ step.text }}
                 </div>
@@ -274,6 +374,10 @@ const canManage = computed(() => {
 
       <ProductReviews :productId="product.id" />
     </div>
+  </div>
+
+  <div v-if="planSuccess" class="plan-toast">
+    {{ planSuccess }}
   </div>
 </template>
 
@@ -377,4 +481,85 @@ const canManage = computed(() => {
   cursor: not-allowed;
   pointer-events: none;
 }
+
+.title-offset {
+  margin-top: 36px;
+}
+
+.ingredients-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.ingredients-col {
+  flex: 1;
+  min-width: 0;
+}
+
+.servings-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.servings-input {
+  max-width: 64px;
+  text-align: center;
+}
+
+.plan-dropdown {
+  position: relative;
+}
+
+.plan-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 3;
+}
+
+.plan-item {
+  border: 0;
+  background: #f6f6ef;
+  color: #333;
+  border-radius: 999px;
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.plan-item:hover {
+  background: #edeedc;
+}
+/* gleiche Button-Styles wie im Profil */
+.pill {
+  border-radius: 999px;
+}
+
+.btn-olive-outline {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: transparent !important;
+}
+
+.btn-olive-outline:hover,
+.btn-olive-outline:focus {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: rgba(107, 106, 25, 0.08) !important;
+}
+
+.btn-olive-outline:active {
+  background: rgba(107, 106, 25, 0.12) !important;
+}
+
 </style>

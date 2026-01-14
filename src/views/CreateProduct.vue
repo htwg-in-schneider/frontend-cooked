@@ -16,15 +16,17 @@ const form = ref({
   title: '',
   categories: [],
   prepTimeMinutes: '',
+  servings: '',
   image: '',
   ingredients: [{ name: '', amount: '' }],
-  steps: [{ text: '' }]
+  steps: [{ title: '', text: '' }]
 })
 
 const errors = ref({
   title: '',
   categories: '',
   prepTimeMinutes: '',
+  servings: '',
   ingredients: '',
   steps: '',
   general: ''
@@ -184,6 +186,7 @@ function validate() {
   const title = form.value.title.trim()
   const categories = Array.isArray(form.value.categories) ? form.value.categories : []
   const minutes = Number(form.value.prepTimeMinutes)
+  const servings = Number(form.value.servings)
 
   let ok = true
 
@@ -208,6 +211,17 @@ function validate() {
     ok = false
   } else if (minutes > 9999) {
     errors.value.prepTimeMinutes = 'Die Zubereitungszeit ist zu groß.'
+    ok = false
+  }
+
+  if (!form.value.servings || Number.isNaN(servings)) {
+    errors.value.servings = 'Bitte gib eine gültige Portionenanzahl ein.'
+    ok = false
+  } else if (servings <= 0) {
+    errors.value.servings = 'Die Portionenanzahl muss größer als 0 sein.'
+    ok = false
+  } else if (servings > 1000) {
+    errors.value.servings = 'Die Portionenanzahl ist zu groß.'
     ok = false
   }
 
@@ -249,7 +263,7 @@ function removeIngredient(index) {
 }
 
 function addStep() {
-  form.value.steps.push({ text: '' })
+  form.value.steps.push({ title: '', text: '' })
 }
 
 function removeStep(index) {
@@ -320,6 +334,7 @@ async function createProduct() {
     const ingredients = normalizeIngredients(form.value.ingredients)
     const steps = (form.value.steps || [])
       .map((s) => ({
+        title: (s?.title || '').trim(),
         text: (s?.text || '').trim()
       }))
       .filter((s) => s.text)
@@ -329,6 +344,7 @@ async function createProduct() {
       title: form.value.title.trim(),
       categories: (form.value.categories || []).filter(Boolean),
       prepTimeMinutes: Number(form.value.prepTimeMinutes),
+      servings: Number(form.value.servings),
       imageUrl: form.value.image.trim(),
       description,
       instructions: description,
@@ -435,7 +451,7 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Minuten -->
-          <div class="col-md-6">
+          <div class="col-md-3">
             <label class="form-label text-muted small">Zeit (Minuten)</label>
             <input
               v-model="form.prepTimeMinutes"
@@ -446,6 +462,21 @@ onBeforeUnmount(() => {
             />
             <div v-if="errors.prepTimeMinutes" class="text-danger small mt-1 ps-2">
               {{ errors.prepTimeMinutes }}
+            </div>
+          </div>
+
+          <!-- Portionen -->
+          <div class="col-md-3">
+            <label class="form-label text-muted small">Portionen</label>
+            <input
+              v-model="form.servings"
+              type="number"
+              class="form-control rounded-pill px-3"
+              placeholder="z.B. 2"
+              min="1"
+            />
+            <div v-if="errors.servings" class="text-danger small mt-1 ps-2">
+              {{ errors.servings }}
             </div>
           </div>
         </div>
@@ -528,7 +559,9 @@ onBeforeUnmount(() => {
 
           <div v-for="(step, stepIndex) in form.steps" :key="stepIndex" class="step-card mb-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <div class="fw-semibold">Schritt {{ stepIndex + 1 }}</div>
+              <div class="fw-semibold">
+                {{ step.title?.trim() || `Schritt ${stepIndex + 1}` }}
+              </div>
               <button
                 class="btn btn-outline-secondary btn-sm"
                 type="button"
@@ -538,6 +571,13 @@ onBeforeUnmount(() => {
                 Entfernen
               </button>
             </div>
+
+            <input
+              v-model="step.title"
+              type="text"
+              class="form-control rounded-pill px-3 mb-2"
+              placeholder="Eigene Überschrift (optional)"
+            />
 
             <textarea
               v-model="step.text"

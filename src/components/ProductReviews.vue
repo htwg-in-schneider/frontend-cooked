@@ -1,7 +1,10 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { authFetch, getApiRoot } from '@/services/apiAuth'
+import { useAuthStore } from '@/stores/authStore'
+import { loadMe } from '@/services/meService'
+import defaultAvatar from '@/assets/default_avatar.webp'
 
 const props = defineProps({
   productId: {
@@ -13,6 +16,8 @@ const props = defineProps({
 const reviews = ref([])
 const loading = ref(true)
 const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0()
+const defaultAvatarUrl = defaultAvatar
+const authStore = useAuthStore()
 
 // Formular-States
 const userName = ref('')
@@ -23,6 +28,10 @@ const text = ref('')
 const submitLoading = ref(false)
 const submitError = ref('')
 const submitSuccess = ref('')
+const deleteError = ref('')
+const deletingId = ref(null)
+
+const isAdmin = computed(() => (authStore.role || '').toUpperCase() === 'ADMIN')
 
 // Funktion zum Laden der Reviews
 async function fetchReviews() {
@@ -60,7 +69,7 @@ async function submitReview() {
 
   // Frontend-Validierung (schnell & einfach)
   if (!userName.value.trim()) {
-    submitError.value = 'Bitte einen Namen eingeben.'
+    submitError.value = 'Kein Profilname gefunden.'
     return
   }
   const s = Number(stars.value)
@@ -106,8 +115,49 @@ async function submitReview() {
   }
 }
 
+function canDeleteReview(review) {
+  if (!isAuthenticated.value || !authStore.me) return false
+  if (isAdmin.value) return true
+  return review?.userId && authStore.me?.id && review.userId === authStore.me.id
+}
+
+async function deleteReview(reviewId) {
+  deleteError.value = ''
+  if (!isAuthenticated.value) {
+    await loginWithRedirect({ appState: { targetUrl: `/product/${props.productId}` } })
+    return
+  }
+  deletingId.value = reviewId
+  try {
+    const apiRoot = getApiRoot()
+    const res = await authFetch(getAccessTokenSilently, `${apiRoot}/review/${reviewId}`, {
+      method: 'DELETE'
+    })
+    if (!res.ok) throw new Error(await res.text())
+    reviews.value = reviews.value.filter((r) => r.id !== reviewId)
+    await fetchReviews()
+  } catch (e) {
+    console.error('Fehler beim Löschen der Review', e)
+    deleteError.value = 'Bewertung konnte nicht gelöscht werden.'
+  } finally {
+    deletingId.value = null
+  }
+}
+
 // Beim Start laden
-onMounted(fetchReviews)
+onMounted(async () => {
+  fetchReviews()
+  if (isAuthenticated.value) {
+    try {
+      if (!authStore.me) {
+        authStore.setMe(await loadMe(getAccessTokenSilently))
+      }
+      userName.value = authStore.me?.name || ''
+    } catch {
+      userName.value = authStore.me?.name || ''
+    }
+  }
+})
 
 // Falls sich die ID ändert, neu laden
 watch(
@@ -116,6 +166,21 @@ watch(
     fetchReviews()
   }
 )
+
+watch(isAuthenticated, async (val) => {
+  if (!val) {
+    userName.value = ''
+    return
+  }
+  try {
+    if (!authStore.me) {
+      authStore.setMe(await loadMe(getAccessTokenSilently))
+    }
+    userName.value = authStore.me?.name || ''
+  } catch {
+    userName.value = authStore.me?.name || ''
+  }
+})
 </script>
 
 <template>
@@ -128,7 +193,11 @@ watch(
 
       <div v-if="!isAuthenticated" class="alert alert-light border">
         Bitte anmelden, um zu bewerten.
-        <button class="btn btn-outline-secondary ms-2" type="button" @click="submitReview">
+        <button
+          class="btn btn-outline-secondary pill btn-olive-outline ms-2"
+          type="button"
+          @click="submitReview"
+        >
           Login
         </button>
       </div>
@@ -138,10 +207,6 @@ watch(
         <div v-if="submitSuccess" class="alert alert-success py-2">{{ submitSuccess }}</div>
 
         <div class="row g-2">
-          <div class="col-12 col-md-5">
-            <input v-model="userName" class="form-control" type="text" placeholder="Dein Name" />
-          </div>
-
           <div class="col-12 col-md-3">
             <div class="star-input">
               <button
@@ -171,7 +236,7 @@ watch(
 
           <div class="col-12 d-flex justify-content-end">
             <button
-              class="btn btn-outline-secondary"
+              class="btn btn-outline-secondary pill btn-olive-outline px-4"
               type="button"
               @click="submitReview"
               :disabled="submitLoading"
@@ -186,6 +251,10 @@ watch(
     <!-- Loading -->
     <div v-if="loading" class="text-muted">Lade Bewertungen...</div>
 
+    <div v-else-if="deleteError" class="alert alert-danger py-2">
+      {{ deleteError }}
+    </div>
+
     <!-- Keine Bewertungen -->
     <div v-else-if="reviews.length === 0" class="text-muted fst-italic">
       Noch keine Bewertungen für dieses Rezept. Sei der Erste!
@@ -193,32 +262,42 @@ watch(
 
     <!-- Liste der Bewertungen -->
     <div v-else class="review-list">
-      <div
-        v-for="review in reviews"
-        :key="review.id"
-        class="review-card mb-3 bg-light p-3 rounded-4"
-      >
-        <div class="d-flex align-items-center mb-2">
-          <!-- Avatar -->
-          <div
-            class="avatar bg-white text-secondary fw-bold rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm"
-          >
-            {{ review.userName?.charAt(0)?.toUpperCase() }}
-          </div>
+      <div v-for="review in reviews" :key="review.id" class="review-card mb-3 bg-light p-3 rounded-4">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="d-flex align-items-center">
+            <!-- Avatar -->
+            <div class="avatar me-2 shadow-sm">
+              <img
+                :src="review.avatarUrl || defaultAvatarUrl"
+                alt="Profilbild"
+                class="avatar-img"
+              />
+            </div>
 
-          <div>
-            <h6 class="m-0 fw-bold text-dark">{{ review.userName }}</h6>
-            <div class="review-stars">
-              <span
-                v-for="s in starValues"
-                :key="s"
-                class="star"
-                :class="{ active: review.stars >= s }"
-              >
-                &#9733;
-              </span>
+            <div>
+              <h6 class="m-0 fw-bold text-dark">{{ review.userName }}</h6>
+              <div class="review-stars">
+                <span
+                  v-for="s in starValues"
+                  :key="s"
+                  class="star"
+                  :class="{ active: review.stars >= s }"
+                >
+                  &#9733;
+                </span>
+              </div>
             </div>
           </div>
+
+          <button
+            v-if="canDeleteReview(review)"
+            class="btn btn-outline-danger btn-sm pill"
+            type="button"
+            :disabled="deletingId === review.id"
+            @click="deleteReview(review.id)"
+          >
+            {{ deletingId === review.id ? 'Löschen...' : 'Löschen' }}
+          </button>
         </div>
 
         <p class="mb-0 text-secondary">{{ review.text }}</p>
@@ -228,10 +307,44 @@ watch(
 </template>
 
 <style scoped>
+/* gleiche Button-Styles wie im Profil */
+.pill {
+  border-radius: 999px;
+}
+
+.btn-olive-outline {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: transparent !important;
+}
+
+.btn-olive-outline:hover,
+.btn-olive-outline:focus {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: rgba(107, 106, 25, 0.08) !important;
+}
+
+.btn-olive-outline:active {
+  background: rgba(107, 106, 25, 0.12) !important;
+}
+
 .avatar {
   width: 40px;
   height: 40px;
-  font-size: 1.2rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .review-card {
@@ -268,5 +381,12 @@ watch(
 
 .star.active {
   color: #6b6a19;
+}
+
+/* Löschen Button wie in der Nutzerverwaltung */
+.btn-outline-danger:hover {
+  background-color: #fdecec !important;
+  border-color: #c94c4c !important;
+  color: #8a1f1f !important;
 }
 </style>

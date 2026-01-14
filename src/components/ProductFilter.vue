@@ -13,7 +13,6 @@ const emit = defineEmits(['filter-change'])
 const searchQuery = ref('')
 const selectedCategories = ref([])
 const dropdownOpen = ref(false)
-const categoryQuery = ref('')
 const selectedSort = ref('published_desc')
 const sortDropdownOpen = ref(false)
 
@@ -63,14 +62,6 @@ const selectedSortLabel = computed(() => {
 
 // Kategorien, normalisiert auf { code, label }
 const categories = ref([])
-const filteredCategories = computed(() => {
-  const q = categoryQuery.value.trim().toLowerCase()
-  if (!q) return categories.value
-  return categories.value.filter((c) => {
-    const hay = `${c.label} ${c.code}`.toLowerCase()
-    return hay.includes(q)
-  })
-})
 
 const selectedCategoryLabels = computed(() => {
   const selected = new Set(selectedCategories.value || [])
@@ -88,7 +79,7 @@ const categoryLabelMap = computed(() => {
 })
 
 const sortedCategories = computed(() => {
-  return filteredCategories.value.slice().sort((a, b) => {
+  return categories.value.slice().sort((a, b) => {
     const selected = new Set(selectedCategories.value || [])
     const aSelected = selected.has(a.code)
     const bSelected = selected.has(b.code)
@@ -146,7 +137,6 @@ function onCategoryChange(code, event) {
 
 function resetCategories() {
   selectedCategories.value = []
-  categoryQuery.value = ''
 }
 
 function toggleDropdown() {
@@ -233,7 +223,6 @@ function selectSort(value) {
 function resetFilter() {
   searchQuery.value = ''
   selectedCategories.value = []
-  categoryQuery.value = ''
   selectedSort.value = 'published_desc'
   sortDropdownOpen.value = false
   emitFilters()
@@ -430,9 +419,7 @@ function applyFilters() {
   overflow-y: auto;
   z-index: 5;
   display: grid;
-  grid-template-columns: repeat(5, minmax(140px, 1fr));
-  grid-template-rows: repeat(5, minmax(0, auto));
-  grid-auto-flow: row;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 6px 10px;
 }
 
@@ -466,6 +453,18 @@ function applyFilters() {
 
 .category-item {
   padding: 4px 2px;
+}
+
+@media (max-width: 991px) {
+  .category-menu {
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  }
+}
+
+@media (max-width: 575px) {
+  .category-menu {
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+  }
 }
 
 .category-item label {
@@ -561,6 +560,4 @@ function applyFilters() {
 
 
 </style>
-
-
 

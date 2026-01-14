@@ -11,7 +11,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 const app = createApp(App)
 
 const redirectUri =
-  import.meta.env.VITE_AUTH0_REDIRECT_URI || `${window.location.origin}${window.location.pathname}`
+  import.meta.env.VITE_AUTH0_REDIRECT_URI || `${window.location.origin}${import.meta.env.BASE_URL}`
 
 if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual'
@@ -32,7 +32,11 @@ const auth0 = createAuth0({
     redirect_uri: redirectUri,
     audience: import.meta.env.VITE_AUTH0_AUDIENCE
   },
-  cacheLocation: 'localstorage'
+  cacheLocation: 'localstorage',
+  onRedirectCallback: (appState) => {
+    const target = appState?.targetUrl || window.location.pathname + window.location.search
+    router.push(target)
+  }
 })
 
 app.use(auth0)
