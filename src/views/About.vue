@@ -83,7 +83,7 @@ import lucasImg from '@/assets/ÜberUnsBilder/lucas.webp'
 /* Schrift */
 .about-card,
 .about-card * {
-  font-family: "Comfortaa", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
 /* Weißer Hauptkasten */
