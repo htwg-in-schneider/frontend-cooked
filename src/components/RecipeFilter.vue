@@ -241,7 +241,7 @@ function resetFilter() {
   >
     <div class="row g-3 align-items-end filter-row">
       <!-- Suche -->
-      <div class="col-md-4">
+      <div class="col-md-5">
         <label class="form-label small text-muted fw-bold">Suche</label>
         <input
           v-model="searchQuery"
@@ -251,7 +251,7 @@ function resetFilter() {
         >
       </div>
       <!-- Kategorie -->
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label class="form-label small text-muted fw-bold">Kategorie</label>
         <div class="category-dropdown">
           <button
@@ -483,6 +483,8 @@ function resetFilter() {
 
 .sort-toggle {
   text-align: left;
+  min-width: 180px;
+  white-space: nowrap;
 }
 
 .sort-menu {
@@ -490,6 +492,7 @@ function resetFilter() {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
+  min-width: 200px;
   background: #fff;
   border: 1px solid #eee;
   border-radius: 16px;
@@ -507,6 +510,7 @@ function resetFilter() {
   border-radius: 999px;
   padding: 6px 12px;
   text-align: left;
+  white-space: nowrap;
 }
 
 .sort-item:hover {
@@ -516,8 +520,9 @@ function resetFilter() {
 .sort-row {
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 16px;
 }
+
 
 .reset-button {
   height: 38px;
