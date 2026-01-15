@@ -7,6 +7,7 @@ import Button from '@/components/Button.vue'
 import ProductCard from '@/components/RecipeCard.vue'
 import { loadMe } from '@/services/meService'
 import { authFetch, getApiRoot, getApiCollection } from '@/services/apiAuth'
+import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
 import defaultAvatar from '@/assets/default_avatar.webp'
 
@@ -134,7 +135,7 @@ async function saveProfile() {
 }
 
 function goToDetail(product) {
-  router.push({ name: 'product-detail', params: { id: product.id } })
+  router.push({ name: 'product-detail', params: { id: product.id }, query: { from: 'profile' } })
 }
 
 async function loadMyRecipes() {
@@ -152,6 +153,8 @@ async function loadMyRecipes() {
 
     const data = await res.json()
     const recipes = Array.isArray(data) ? data : []
+
+    const categoryMap = await loadCategoryMap()
 
     const enriched = await Promise.all(
       recipes.map(async (recipe) => {
@@ -171,7 +174,7 @@ async function loadMyRecipes() {
           // ignore
         }
 
-        const categories = Array.isArray(recipe.categories)
+        const categoryCodes = Array.isArray(recipe.categories)
           ? recipe.categories
           : recipe.category
             ? [recipe.category]
@@ -180,7 +183,8 @@ async function loadMyRecipes() {
         return {
           id: recipe.id,
           title: recipe.title,
-          categories,
+          categories: mapCategoryLabels(categoryCodes, categoryMap),
+          categoryCodes,
           time: recipe.prepTimeMinutes + ' min',
           durationMinutes: Number(recipe.prepTimeMinutes) || 0,
           image: recipe.imageUrl,

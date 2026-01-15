@@ -1,6 +1,7 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import Button from './Button.vue'
+import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 
 const props = defineProps({
   product: Object,
@@ -11,6 +12,12 @@ const props = defineProps({
 defineEmits(['show-details', 'toggle-favorite'])
 
 const stars = [1, 2, 3, 4, 5]
+
+const categoryMap = ref({})
+
+onMounted(async () => {
+  categoryMap.value = await loadCategoryMap()
+})
 
 function isStarActive(rating, value) {
   if (!rating) return false
@@ -23,6 +30,10 @@ function formatRating(value) {
 }
 
 const categories = computed(() => {
+  const codes = Array.isArray(props.product?.categoryCodes) ? props.product.categoryCodes : null
+  if (codes && codes.length) {
+    return mapCategoryLabels(codes, categoryMap.value)
+  }
   const raw = props.product?.categories ?? props.product?.category ?? []
   if (Array.isArray(raw)) return raw.filter(Boolean)
   if (!raw) return []

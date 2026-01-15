@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import ProductCard from '@/components/RecipeCard.vue'
@@ -7,13 +7,15 @@ import Button from '@/components/Button.vue'
 import { authFetch, getApiCollection, getApiRoot } from '@/services/apiAuth'
 import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 import { resolveImageUrl } from '@/services/imageService'
+import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
 
 const router = useRouter()
-const { getAccessTokenSilently } = useAuth0()
+const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0()
 
 const products = ref([])
 const loading = ref(true)
 const error = ref('')
+const favoriteIds = ref(new Set())
 
 async function loadMyRecipes() {
   loading.value = true
@@ -79,10 +81,47 @@ async function loadMyRecipes() {
 }
 
 function goToDetail(product) {
-  router.push({ name: 'product-detail', params: { id: product.id } })
+  router.push({ name: 'product-detail', params: { id: product.id }, query: { from: 'my-recipes' } })
 }
 
-onMounted(loadMyRecipes)
+async function loadFavorites() {
+  if (!isAuthenticated.value) {
+    favoriteIds.value = new Set()
+    return
+  }
+  try {
+    const ids = await fetchFavoriteIds(getAccessTokenSilently)
+    favoriteIds.value = new Set(ids)
+  } catch {
+    favoriteIds.value = new Set()
+  }
+}
+
+async function toggleFavorite(product) {
+  if (!product?.id) return
+  if (!isAuthenticated.value) {
+    await loginWithRedirect({ appState: { target: router.currentRoute.value.fullPath } })
+    return
+  }
+  const isFav = favoriteIds.value.has(product.id)
+  try {
+    const ids = isFav
+      ? await removeFavorite(getAccessTokenSilently, product.id)
+      : await addFavorite(getAccessTokenSilently, product.id)
+    favoriteIds.value = new Set(ids)
+  } catch (e) {
+    console.error(e)
+  }
+}
+
+onMounted(() => {
+  loadMyRecipes()
+  loadFavorites()
+})
+
+watch(isAuthenticated, () => {
+  loadFavorites()
+})
 </script>
 
 <template>
@@ -111,7 +150,13 @@ onMounted(loadMyRecipes)
 
     <div v-else class="row g-4">
       <div class="col-12 col-md-6 col-lg-4" v-for="product in products" :key="product.id">
-        <ProductCard :product="product" @show-details="goToDetail" />
+        <ProductCard
+          :product="product"
+          :is-favorite="favoriteIds.has(product.id)"
+          :can-favorite="isAuthenticated"
+          @show-details="goToDetail"
+          @toggle-favorite="toggleFavorite"
+        />
       </div>
     </div>
   </div>
