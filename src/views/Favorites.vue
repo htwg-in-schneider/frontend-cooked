@@ -78,7 +78,7 @@ async function loadFavorites() {
 }
 
 function goToDetail(product) {
-  router.push({ name: 'product-detail', params: { id: product.id } })
+  router.push({ name: 'product-detail', params: { id: product.id }, query: { from: 'favorites' } })
 }
 
 async function toggleFavorite(product) {
@@ -100,7 +100,7 @@ onMounted(loadFavorites)
   <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
       <h2 class="fw-bold mb-0">Favoriten</h2>
-      <router-link to="/profile" class="btn btn-outline-secondary pill">
+      <router-link to="/profile" class="btn btn-outline-secondary pill btn-olive-outline btn-olive-white">
         Zurück zum Profil
       </router-link>
     </div>
@@ -137,5 +137,37 @@ onMounted(loadFavorites)
 <style scoped>
 .pill {
   border-radius: 999px;
+}
+
+.btn-olive-outline {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: transparent !important;
+}
+
+.btn-olive-outline.btn-olive-white {
+  background: #fff !important;
+}
+
+.btn-olive-outline.btn-olive-white:hover,
+.btn-olive-outline.btn-olive-white:focus {
+  background: #fff !important;
+  box-shadow: inset 0 0 0 999px rgba(107, 106, 25, 0.12) !important;
+}
+
+.btn-olive-outline.btn-olive-white:active {
+  background: #fff !important;
+  box-shadow: inset 0 0 0 999px rgba(107, 106, 25, 0.12) !important;
+}
+
+.btn-olive-outline:hover,
+.btn-olive-outline:focus {
+  border-color: #6b6a19 !important;
+  color: #6b6a19 !important;
+  background: rgba(107, 106, 25, 0.08) !important;
+}
+
+.btn-olive-outline:active {
+  background: rgba(107, 106, 25, 0.12) !important;
 }
 </style>

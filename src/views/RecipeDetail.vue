@@ -119,7 +119,7 @@ async function deleteRecipe() {
 
     if (!res.ok) throw new Error(await res.text())
 
-    router.push('/')
+    router.push(backTo.value)
   } catch (e) {
     console.error(e)
     deleteError.value = 'Rezept konnte nicht entfernt werden.'
@@ -174,6 +174,14 @@ const canManage = computed(() => {
   return !!email && !!createdBy && createdBy.toLowerCase() === email.toLowerCase()
 })
 
+const backTo = computed(() => {
+  const from = route.query?.from
+  if (from === 'profile') return '/profile'
+  if (from === 'my-recipes') return '/my-recipes'
+  if (from === 'favorites') return '/favorites'
+  return '/'
+})
+
 const scaledIngredients = computed(() => {
   if (!product.value) return []
   const base = product.value.servings || 1
@@ -221,13 +229,13 @@ async function addToPlan(dayCode) {
     <div v-else-if="error" class="text-center py-5 text-white">
       <h2>Oje!</h2>
       <p>{{ error }}</p>
-      <router-link to="/" class="text-white">Zurück zur Übersicht</router-link>
+      <router-link :to="backTo" class="text-white">Zurück zur Übersicht</router-link>
     </div>
 
     <!-- Inhalt -->
     <div v-else-if="product" class="detail-card bg-white p-4 shadow-sm mx-auto">
       <div class="detail-actions">
-        <router-link to="/" class="text-decoration-none">
+        <router-link :to="backTo" class="text-decoration-none">
           <Button variant="secondary" class="btn-sm">Zurück zur Übersicht</Button>
         </router-link>
         <button
