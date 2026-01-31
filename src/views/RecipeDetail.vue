@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
 import RecipeReviews from '@/components/RecipeReviews.vue'
-import { authFetch, getApiCollection } from '@/services/apiAuth'
 import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
@@ -12,6 +11,7 @@ import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 import { resolveImageUrl } from '@/services/imageService'
 import { addMealPlanEntry } from '@/services/mealPlanService'
 import { scaleIngredientAmount } from '@/services/ingredientScale'
+import { fetchRecipeById, deleteRecipe as deleteRecipeApi } from '@/services/recipeService'
 
 const route = useRoute()
 const router = useRouter()
@@ -59,10 +59,7 @@ async function loadProduct() {
     }
 
     const id = route.params.id
-    const res = await fetch(`${getApiCollection()}/${id}`)
-    if (!res.ok) throw new Error('Rezept nicht gefunden')
-
-    const data = await res.json()
+    const data = await fetchRecipeById(id)
 
     const steps = Array.isArray(data.steps) && data.steps.length
       ? data.steps
@@ -111,14 +108,7 @@ async function deleteRecipe() {
   deleting.value = true
 
   try {
-    const res = await authFetch(
-      getAccessTokenSilently,
-      `${getApiCollection()}/${product.value.id}`,
-      { method: 'DELETE' }
-    )
-
-    if (!res.ok) throw new Error(await res.text())
-
+    await deleteRecipeApi(getAccessTokenSilently, product.value.id)
     router.push(backTo.value)
   } catch (e) {
     console.error(e)

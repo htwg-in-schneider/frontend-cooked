@@ -6,9 +6,11 @@ import { useAuthStore } from '@/stores/authStore'
 import Button from '@/components/Button.vue'
 import ProductCard from '@/components/RecipeCard.vue'
 import { loadMe } from '@/services/meService'
-import { authFetch, getApiRoot, getApiCollection } from '@/services/apiAuth'
+import { authFetch, getApiRoot } from '@/services/apiAuth'
 import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
+import { fetchMyRecipes } from '@/services/recipeService'
+import { fetchReviewStats } from '@/services/reviewService'
 import defaultAvatar from '@/assets/default_avatar.webp'
 
 const router = useRouter()
@@ -145,34 +147,14 @@ async function loadMyRecipes() {
   errorMy.value = ''
 
   try {
-    const baseUrl = getApiCollection()
-    const apiRoot = getApiRoot()
-
-    const res = await authFetch(getAccessTokenSilently, `${baseUrl}/mine`)
-    if (!res.ok) throw new Error('Fehler beim Laden')
-
-    const data = await res.json()
+    const data = await fetchMyRecipes(getAccessTokenSilently)
     const recipes = Array.isArray(data) ? data : []
 
     const categoryMap = await loadCategoryMap()
 
     const enriched = await Promise.all(
       recipes.map(async (recipe) => {
-        let ratingAvg = 0
-        let ratingCount = 0
-        try {
-          const reviewRes = await fetch(`${apiRoot}/review/product/${recipe.id}`)
-          if (reviewRes.ok) {
-            const reviews = await reviewRes.json()
-            if (Array.isArray(reviews) && reviews.length) {
-              ratingCount = reviews.length
-              ratingAvg =
-                reviews.reduce((sum, r) => sum + (Number(r.stars) || 0), 0) / ratingCount
-            }
-          }
-        } catch {
-          // ignore
-        }
+        const { ratingAvg, ratingCount } = await fetchReviewStats(recipe.id)
 
         const categoryCodes = Array.isArray(recipe.categories)
           ? recipe.categories

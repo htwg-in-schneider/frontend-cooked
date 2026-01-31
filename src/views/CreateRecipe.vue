@@ -3,8 +3,9 @@ import { ref, onMounted, computed, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import Button from '@/components/Button.vue'
-import { authFetch, getApiCollection, getApiRoot } from '@/services/apiAuth'
+import { getApiRoot } from '@/services/apiAuth'
 import { resolveImageUrl } from '@/services/imageService'
+import { createRecipe } from '@/services/recipeService'
 
 const router = useRouter()
 const { getAccessTokenSilently } = useAuth0()
@@ -331,7 +332,6 @@ async function createProduct() {
   try {
     errors.value.general = ''
 
-    const baseUrl = getApiCollection()
     const ingredients = normalizeIngredients(form.value.ingredients)
     const steps = (form.value.steps || [])
       .map((s) => ({
@@ -353,17 +353,7 @@ async function createProduct() {
       steps
     }
 
-    const res = await authFetch(getAccessTokenSilently, `${baseUrl}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-
-    if (!res.ok) {
-      const msg = await res.text()
-      throw new Error(msg || 'Fehler beim Erstellen')
-    }
-
+    await createRecipe(getAccessTokenSilently, payload)
     alert('Rezept erfolgreich erstellt!')
     router.push('/')
   } catch (e) {

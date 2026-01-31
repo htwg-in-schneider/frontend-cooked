@@ -5,8 +5,9 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import { useAuthStore } from '@/stores/authStore'
 import { loadMe } from '@/services/meService'
 import Button from '@/components/Button.vue'
-import { authFetch, getApiCollection, getApiRoot } from '@/services/apiAuth'
+import { getApiRoot } from '@/services/apiAuth'
 import { resolveImageUrl } from '@/services/imageService'
+import { fetchRecipeById, updateRecipe, deleteRecipe } from '@/services/recipeService'
 
 const route = useRoute()
 const router = useRouter()
@@ -355,14 +356,7 @@ onMounted(async () => {
       authStore.setMe(await loadMe(getAccessTokenSilently))
     }
     const id = route.params.id
-    const baseUrl = getApiCollection()
-    const res = await fetch(`${baseUrl}/${id}`)
-
-    if (!res.ok) {
-      throw new Error(`Rezept nicht gefunden (Status ${res.status})`)
-    }
-
-    const data = await res.json()
+    const data = await fetchRecipeById(id)
 
     const ingredients = Array.isArray(data.ingredients) && data.ingredients.length
       ? data.ingredients
@@ -412,7 +406,6 @@ async function updateProduct() {
       alert('Keine Berechtigung.')
       return
     }
-    const baseUrl = getApiCollection()
     const id = route.params.id
 
     const ingredients = normalizeIngredients(form.value.ingredients)
@@ -424,25 +417,17 @@ async function updateProduct() {
       .filter((s) => s.text)
     const description = buildDescription(steps)
 
-    const res = await authFetch(getAccessTokenSilently, `${baseUrl}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: form.value.title,
-        categories: (form.value.categories || []).filter(Boolean),
-        prepTimeMinutes: form.value.prepTimeMinutes,
-        servings: form.value.servings,
-        imageUrl: form.value.image,
-        description,
-        instructions: description,
-        ingredients,
-        steps
-      })
+    await updateRecipe(getAccessTokenSilently, id, {
+      title: form.value.title,
+      categories: (form.value.categories || []).filter(Boolean),
+      prepTimeMinutes: form.value.prepTimeMinutes,
+      servings: form.value.servings,
+      imageUrl: form.value.image,
+      description,
+      instructions: description,
+      ingredients,
+      steps
     })
-
-    if (!res.ok) {
-      throw new Error(await res.text())
-    }
 
     alert('Änderungen gespeichert!')
     router.push('/')
@@ -457,16 +442,8 @@ async function deleteProduct() {
   if (!confirm('Wirklich löschen?')) return
 
   try {
-    const baseUrl = getApiCollection()
     const id = route.params.id
-
-    const res = await authFetch(getAccessTokenSilently, `${baseUrl}/${id}`, {
-      method: 'DELETE'
-    })
-
-    if (!res.ok && res.status !== 204) {
-      throw new Error(`Fehler beim Löschen (Status ${res.status})`)
-    }
+    await deleteRecipe(getAccessTokenSilently, id)
 
     alert('Rezept gelöscht!')
     router.push('/')
