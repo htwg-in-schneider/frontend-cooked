@@ -5,7 +5,7 @@ import { useAuth0 } from '@auth0/auth0-vue'
 import ProductCard from '@/components/RecipeCard.vue'
 import Button from '@/components/Button.vue'
 import { fetchFavorites, removeFavorite } from '@/services/favoritesService'
-import { getApiRoot } from '@/services/apiAuth'
+import { fetchReviewStats } from '@/services/reviewService'
 import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 import { resolveImageUrl } from '@/services/imageService'
 
@@ -22,8 +22,6 @@ async function loadFavorites() {
   error.value = ''
 
   try {
-    const apiRoot = getApiRoot()
-
     const data = await fetchFavorites(getAccessTokenSilently)
     const recipes = Array.isArray(data) ? data : []
 
@@ -31,20 +29,7 @@ async function loadFavorites() {
 
     const enriched = await Promise.all(
       recipes.map(async recipe => {
-        let ratingAvg = 0
-        let ratingCount = 0
-        try {
-          const reviewRes = await fetch(`${apiRoot}/review/product/${recipe.id}`)
-          if (reviewRes.ok) {
-            const reviews = await reviewRes.json()
-            if (Array.isArray(reviews) && reviews.length) {
-              ratingCount = reviews.length
-              ratingAvg = reviews.reduce((sum, r) => sum + (Number(r.stars) || 0), 0) / ratingCount
-            }
-          }
-        } catch {
-          // ignore rating errors
-        }
+        const { ratingAvg, ratingCount } = await fetchReviewStats(recipe.id)
 
         const categoryCodes = Array.isArray(recipe.categories)
           ? recipe.categories

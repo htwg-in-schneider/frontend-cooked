@@ -16,6 +16,7 @@ const dropdownOpen = ref(false)
 const selectedSort = ref('published_desc')
 const sortDropdownOpen = ref(false)
 
+// Küchenlogik: genau eine "Cuisine" gleichzeitig, andere Gruppen dürfen parallel
 const cuisineCodes = new Set([
   'ITALIAN',
   'FRENCH',
@@ -78,6 +79,7 @@ const categoryLabelMap = computed(() => {
   return map
 })
 
+// Sortiert: ausgewählte zuerst, dann Gruppen-Reihenfolge, dann alphabetisch
 const sortedCategories = computed(() => {
   return categories.value.slice().sort((a, b) => {
     const selected = new Set(selectedCategories.value || [])
@@ -113,6 +115,7 @@ const selectedCuisine = computed(() =>
 )
 
 function groupRank(code) {
+  if (code === 'SEAFOOD') return 99
   if (dishTypeCodes.has(code)) return 1
   if (cuisineCodes.has(code)) return 2
   if (dietCodes.has(code)) return 3
@@ -124,6 +127,7 @@ function isCuisine(code) {
   return cuisineCodes.has(code)
 }
 
+// Falls eine Cuisine ausgewählt wird, alle anderen Cuisine-Codes entfernen
 function onCategoryChange(code, event) {
   if (!isCuisine(code)) {
     return
@@ -203,6 +207,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('click', onDocumentClick)
+  if (searchTimer) clearTimeout(searchTimer)
 })
 
 // Filter nach außen geben
@@ -219,7 +224,17 @@ function selectSort(value) {
   closeSortDropdown()
 }
 
-watch([searchQuery, selectedCategories, selectedSort], () => {
+const searchDebounceMs = 250
+let searchTimer = null
+
+watch(searchQuery, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => {
+    emitFilters()
+  }, searchDebounceMs)
+})
+
+watch([selectedCategories, selectedSort], () => {
   emitFilters()
 })
 
@@ -389,9 +404,9 @@ function resetFilter() {
 .category-label {
   flex: 1;
   min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .category-menu {
@@ -457,6 +472,8 @@ function resetFilter() {
 
 .category-item label {
   width: 100%;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .category-disabled {

@@ -48,6 +48,8 @@ const categories = computed(() => {
         class="square rounded-4 w-100"
         :src="product.image"
         :alt="product.title"
+        loading="lazy"
+        decoding="async"
         style="object-fit: cover; aspect-ratio: 1/1;"
       />
     </div>

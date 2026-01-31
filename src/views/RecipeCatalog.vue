@@ -8,7 +8,8 @@ import ProductCard from '@/components/RecipeCard.vue'
 import ProductFilter from '@/components/RecipeFilter.vue'
 import Button from '@/components/Button.vue'
 import { fetchFavoriteIds, addFavorite, removeFavorite } from '@/services/favoritesService'
-import { getApiCollection, getApiRoot } from '@/services/apiAuth'
+import { fetchRecipes } from '@/services/recipeService'
+import { fetchReviewStats } from '@/services/reviewService'
 import { loadCategoryMap, mapCategoryLabels } from '@/services/categoryService'
 import { resolveImageUrl } from '@/services/imageService'
 
@@ -52,43 +53,15 @@ async function fetchProducts(filters = {}) {
   try {
     const categoryMap = await loadCategoryMap()
 
-    // 1. Basis-URL aus der .env Datei laden (z.B. http://localhost:8081/api/product)
-    const baseUrl = getApiCollection()
-
-    // Wir nutzen URLSearchParams, um die URL sauber zusammenzubauen
-    const url = new URL(baseUrl, window.location.origin)
-
-    // 2. Parameter für dein Spring Boot Backend setzen
-    if (filters.name) {
-      url.searchParams.append('name', filters.name)
-    }
     const selectedCategories = Array.isArray(filters.categories) ? filters.categories : []
 
-    // 3. Daten abrufen
-    const res = await fetch(url.toString())
-    if (!res.ok) throw new Error('Fehler beim Laden')
+    const data = await fetchRecipes({ name: filters.name })
 
-    const data = await res.json()
-
-    const apiRoot = getApiRoot()
     const recipes = Array.isArray(data) ? data : []
 
     const enriched = await Promise.all(
       recipes.map(async recipe => {
-        let ratingAvg = 0
-        let ratingCount = 0
-        try {
-          const reviewRes = await fetch(`${apiRoot}/review/product/${recipe.id}`)
-          if (reviewRes.ok) {
-            const reviews = await reviewRes.json()
-            if (Array.isArray(reviews) && reviews.length) {
-              ratingCount = reviews.length
-              ratingAvg = reviews.reduce((sum, r) => sum + (Number(r.stars) || 0), 0) / ratingCount
-            }
-          }
-        } catch {
-          // ignore rating errors
-        }
+        const { ratingAvg, ratingCount } = await fetchReviewStats(recipe.id)
 
         const categoryCodes = Array.isArray(recipe.categories)
           ? recipe.categories
